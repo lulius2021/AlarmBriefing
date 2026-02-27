@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { db, hashKey } from './db';
+import { DB, hashKey } from './db';
 import { NextRequest } from 'next/server';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'ab-dev-secret-change-in-prod';
@@ -23,11 +23,11 @@ export function getUserFromRequest(req: NextRequest): string | null {
   return decoded?.userId || null;
 }
 
-export function getBotFromRequest(req: NextRequest): { userId: string; scopes: string[] } | null {
+export async function getBotFromRequest(req: NextRequest): Promise<{ userId: string; scopes: string[] } | null> {
   const key = req.headers.get('x-bot-key');
   if (!key) return null;
   const hash = hashKey(key);
-  const bot = db.botKeys.get(hash);
+  const bot = await DB.getBotByHash(hash);
   if (!bot) return null;
-  return { userId: bot.userId, scopes: bot.scopes };
+  return { userId: bot.user_id, scopes: bot.scopes };
 }
