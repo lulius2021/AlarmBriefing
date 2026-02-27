@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     time: body.time || '07:00', days: body.days || [],
     snooze_enabled: body.snoozeEnabled ?? true, snooze_duration: body.snoozeDuration || 5,
     sound: body.sound || 'default', vibration: body.vibration ?? true,
-    briefing_mode: body.briefingMode || 'auto', managed_by: 'manual',
+    briefing_mode: body.briefingMode || 'standard', managed_by: 'manual',
     created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
   });
 
