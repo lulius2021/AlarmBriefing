@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AlarmBriefing – Preview</title>
+  <title>AlarmBriefing</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔔</text></svg>">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
@@ -29,15 +29,20 @@
       --danger: #ef4444;
     }
 
-    body {
+    html, body {
       font-family: 'Inter', -apple-system, sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
+      height: 100%;
+      overflow: hidden;
     }
 
-    /* Ambient background */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     body::before {
       content: '';
       position: fixed;
@@ -47,125 +52,91 @@
         radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 50%);
       pointer-events: none;
       z-index: 0;
-      animation: ambientShift 15s ease-in-out infinite alternate;
     }
 
-    @keyframes ambientShift {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-
-    /* Phone frame */
-    .phone-frame {
+    /* Phone Frame */
+    .phone {
       width: 390px;
-      max-width: 100vw;
-      min-height: 100vh;
-      margin: 0 auto;
+      height: 100%;
+      max-height: 844px;
       position: relative;
       z-index: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     @media (min-width: 500px) {
-      body { display: flex; align-items: center; justify-content: center; padding: 30px 0; min-height: 100vh; }
-      .phone-frame {
+      .phone {
         height: 90vh;
-        min-height: 700px;
-        max-height: 844px;
         border-radius: 40px;
         border: 2px solid var(--border);
         box-shadow: 0 20px 80px rgba(0,0,0,0.5), 0 0 60px rgba(59,130,246,0.05);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
       }
     }
 
-    /* ===== SCREENS ===== */
-    .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
-    .screen.active { display: flex; animation: fadeIn 0.3s ease-out; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    @media (max-width: 500px) {
+      .phone { width: 100%; max-height: 100%; }
     }
+
+    /* Screens */
+    .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .screen.active { display: flex; }
 
     /* ===== ONBOARDING ===== */
-    .onboarding {
+    .ob {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      padding: 40px 30px 30px;
-      overflow: hidden;
-      gap: 30px;
+      padding: 24px;
     }
 
-    .ob-progress {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 40px;
-    }
+    .ob-progress { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+    .ob-dot { width: 8px; height: 8px; border-radius: 4px; background: var(--border); transition: all 0.3s; }
+    .ob-dot.active { background: var(--blue); width: 24px; box-shadow: 0 0 10px var(--blue-glow); }
 
-    .ob-dot {
-      width: 8px; height: 8px;
-      border-radius: 4px;
-      background: var(--border);
-      transition: all 0.3s;
-    }
-
-    .ob-dot.active {
-      background: var(--blue);
-      box-shadow: 0 0 10px var(--blue-glow);
-      width: 24px;
-    }
-
-    .ob-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    .ob-icon {
-      font-size: 72px;
-      margin-bottom: 24px;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .ob-title {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      line-height: 1.3;
-    }
-
+    .ob-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .ob-icon { font-size: 56px; margin-bottom: 16px; }
+    .ob-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
     .ob-title span { color: var(--blue); }
+    .ob-desc { font-size: 14px; color: var(--text-dim); line-height: 1.6; max-width: 300px; margin-bottom: 16px; }
 
-    .ob-desc {
-      font-size: 15px;
-      color: var(--text-dim);
-      line-height: 1.6;
-      max-width: 300px;
+    .ob-explain {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: left;
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 12px;
+    }
+    .ob-explain-title { font-size: 12px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .ob-explain p { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin-bottom: 4px; }
+    .ob-explain code { background: var(--blue-muted); color: var(--blue-light); padding: 1px 6px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+    .ob-key-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--blue-light);
+      word-break: break-all;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+      margin-bottom: 8px;
+      user-select: all;
+      cursor: pointer;
     }
 
-    .ob-footer {
-      display: flex;
-      gap: 10px;
-      padding-top: 20px;
-    }
+    .ob-footer { display: flex; gap: 10px; padding-top: 12px; }
 
-    /* ===== BUTTONS ===== */
+    /* Buttons */
     .btn {
-      padding: 14px 24px;
+      padding: 13px 24px;
       border: 1px solid var(--border);
       background: var(--bg-card);
       color: var(--text);
@@ -174,100 +145,65 @@
       font-size: 15px;
       font-family: 'Inter', sans-serif;
       font-weight: 600;
-      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-      position: relative;
-      overflow: hidden;
+      transition: all 0.2s;
     }
-
-    .btn:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-1px); }
+    .btn:hover { border-color: rgba(59,130,246,0.3); }
     .btn:active { transform: scale(0.97); }
-
     .btn-blue {
       background: linear-gradient(135deg, var(--blue), var(--blue-dark));
       border-color: var(--blue);
       color: white;
       box-shadow: 0 0 20px var(--blue-glow);
     }
-
-    .btn-blue:hover { box-shadow: 0 0 30px rgba(59,130,246,0.5); }
-
     .btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 10px; }
     .btn-full { width: 100%; }
     .btn-flex { flex: 1; }
 
-    .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.2); }
-    .btn-danger:hover { background: rgba(239,68,68,0.08); }
-
-    /* ===== HOME SCREEN ===== */
+    /* ===== HOME ===== */
     .home-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20px 20px 8px;
+      padding: 16px 20px 8px;
+      flex-shrink: 0;
     }
-
-    .home-title {
-      font-size: 26px;
-      font-weight: 800;
-    }
-
+    .home-title { font-size: 22px; font-weight: 800; }
     .home-title span { color: var(--blue); }
+    .home-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 
-    .home-subtitle {
-      font-size: 13px;
-      color: var(--text-dim);
-      margin-top: 2px;
-    }
-
-    .settings-btn {
-      width: 44px; height: 44px;
-      border-radius: 12px;
+    .icon-btn {
+      width: 40px; height: 40px;
+      border-radius: 10px;
       background: var(--bg-card);
       border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 16px;
       transition: all 0.2s;
     }
+    .icon-btn:hover { border-color: rgba(59,130,246,0.3); }
 
-    .settings-btn:hover { border-color: rgba(59,130,246,0.3); }
-
-    /* Status Bar */
-    .status-bar {
+    /* Next Alarm Banner */
+    .next-alarm {
+      margin: 10px 20px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.05));
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin: 12px 20px 4px;
-      padding: 12px 16px;
-      background: var(--bg-card);
-      border-radius: 12px;
-      border: 1px solid var(--border);
+      gap: 12px;
+      flex-shrink: 0;
     }
-
-    .status-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px rgba(34,197,94,0.5);
-      animation: dotPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes dotPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .status-text { font-size: 13px; color: var(--text-dim); }
-    .status-sep { color: var(--text-muted); }
+    .next-alarm-icon { font-size: 28px; }
+    .next-alarm-time { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; color: var(--blue-light); }
+    .next-alarm-label { font-size: 12px; color: var(--text-dim); }
+    .next-alarm-briefing { font-size: 11px; color: var(--blue); margin-top: 2px; }
 
     /* Alarm List */
-    .alarm-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 20px;
-    }
+    .alarm-list { flex: 1; overflow-y: auto; padding: 8px 20px; }
 
     .alarm-card {
       display: flex;
@@ -275,832 +211,561 @@
       justify-content: space-between;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px 18px;
-      margin-bottom: 12px;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
       cursor: pointer;
-      transition: all 0.25s;
-      animation: cardSlide 0.4s ease-out backwards;
+      transition: all 0.2s;
     }
-
-    .alarm-card:nth-child(1) { animation-delay: 0s; }
-    .alarm-card:nth-child(2) { animation-delay: 0.06s; }
-    .alarm-card:nth-child(3) { animation-delay: 0.12s; }
-    .alarm-card:nth-child(4) { animation-delay: 0.18s; }
-
-    @keyframes cardSlide {
-      from { opacity: 0; transform: translateX(-12px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
     .alarm-card:hover { border-color: rgba(59,130,246,0.25); background: var(--bg-card-hover); }
-    .alarm-card.active { border-color: rgba(59,130,246,0.2); }
-    .alarm-card.inactive { opacity: 0.45; }
+    .alarm-card.inactive { opacity: 0.4; }
 
-    .alarm-left { flex: 1; }
+    .alarm-time { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; line-height: 1; }
+    .alarm-meta { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+    .alarm-days { display: flex; gap: 3px; margin-top: 4px; }
+    .day-tag { font-size: 9px; font-weight: 600; color: var(--blue-light); background: var(--blue-muted); padding: 2px 6px; border-radius: 5px; }
+    .bot-tag { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--blue); background: var(--blue-muted); border: 1px solid rgba(59,130,246,0.2); padding: 2px 7px; border-radius: 5px; }
 
-    .alarm-time {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 36px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      line-height: 1;
-      transition: color 0.3s;
-    }
-
-    .alarm-card.active .alarm-time { color: var(--text); }
-    .alarm-card.inactive .alarm-time { color: var(--text-dim); }
-
-    .alarm-name {
-      font-size: 13px;
-      color: var(--text-dim);
-      margin-top: 4px;
-    }
-
-    .alarm-days {
-      display: flex;
-      gap: 4px;
-      margin-top: 6px;
-    }
-
-    .day-badge {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--blue-light);
-      background: var(--blue-muted);
-      padding: 2px 7px;
-      border-radius: 6px;
-    }
-
-    .alarm-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 8px;
-    }
-
-    .bot-badge {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      color: var(--blue);
-      background: var(--blue-muted);
-      border: 1px solid rgba(59,130,246,0.2);
-      padding: 2px 8px;
-      border-radius: 6px;
-    }
-
-    .briefing-label {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    /* Toggle Switch */
-    .toggle {
-      width: 48px; height: 26px;
-      border-radius: 13px;
-      background: var(--border);
-      cursor: pointer;
-      position: relative;
-      transition: background 0.3s;
-    }
-
+    .toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--border); cursor: pointer; position: relative; transition: background 0.3s; flex-shrink: 0; }
     .toggle.on { background: var(--blue-muted); }
-
-    .toggle::after {
-      content: '';
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      background: var(--text-dim);
-      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-
-    .toggle.on::after {
-      left: 25px;
-      background: var(--blue);
-      box-shadow: 0 0 10px var(--blue-glow);
-    }
+    .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--text-dim); transition: all 0.3s; }
+    .toggle.on::after { left: 23px; background: var(--blue); box-shadow: 0 0 8px var(--blue-glow); }
 
     /* FAB */
     .fab {
       position: absolute;
-      bottom: 24px;
-      right: 24px;
-      width: 58px; height: 58px;
+      bottom: 20px; right: 20px;
+      width: 52px; height: 52px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--blue), var(--blue-dark));
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 24px var(--blue-glow), 0 8px 20px rgba(0,0,0,0.3);
-      font-size: 30px;
-      color: white;
-      font-weight: 300;
-      transition: all 0.25s;
+      box-shadow: 0 0 24px var(--blue-glow);
+      font-size: 26px; color: white;
       z-index: 10;
-    }
-
-    .fab:hover { transform: scale(1.1); box-shadow: 0 0 40px rgba(59,130,246,0.5); }
-    .fab:active { transform: scale(0.95); }
-
-    /* ===== ALARM DETAIL MODAL ===== */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(8px);
-      z-index: 50;
-      align-items: flex-end;
-      justify-content: center;
-    }
-
-    .modal-overlay.active { display: flex; }
-
-    .modal {
-      width: 390px;
-      max-width: 100vw;
-      max-height: 85vh;
-      background: var(--bg);
-      border-top-left-radius: 24px;
-      border-top-right-radius: 24px;
-      border: 1px solid var(--border);
-      border-bottom: none;
-      overflow-y: auto;
-      animation: slideUp 0.35s cubic-bezier(0.4,0,0.2,1);
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .modal-handle {
-      width: 36px; height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      margin: 12px auto;
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 20px 16px;
-    }
-
-    .modal-title { font-size: 18px; font-weight: 700; }
-    .modal-close { color: var(--blue); cursor: pointer; font-size: 14px; font-weight: 600; }
-
-    .modal-body { padding: 0 20px 30px; }
-
-    /* Time Input */
-    .time-display {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin: 10px 0 30px;
-    }
-
-    .time-digit {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 56px;
-      font-weight: 700;
-      width: 100px;
-      text-align: center;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 10px;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.3s;
-    }
-
-    .time-digit:focus { border-color: var(--blue); box-shadow: 0 0 15px rgba(59,130,246,0.15); }
-
-    .time-sep {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 48px;
-      font-weight: 300;
-      color: var(--blue);
-    }
-
-    /* Section */
-    .section { margin-bottom: 22px; }
-    .section-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-bottom: 10px;
-    }
-
-    .input {
-      width: 100%;
-      padding: 13px 16px;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--text);
-      font-size: 15px;
-      font-family: 'Inter', sans-serif;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-
-    .input:focus { border-color: var(--blue); }
-
-    /* Days Grid */
-    .days-grid {
-      display: flex;
-      gap: 6px;
-    }
-
-    .day-btn {
-      flex: 1;
-      text-align: center;
-      padding: 10px 0;
-      border-radius: 10px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .day-btn.active {
-      background: var(--blue-muted);
-      border-color: var(--blue);
-      color: var(--blue);
-    }
-
-    .day-btn:hover { border-color: rgba(59,130,246,0.3); }
-
-    /* Radio Options */
-    .radio-group { display: flex; flex-direction: column; gap: 8px; }
-
-    .radio-option {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
       transition: all 0.2s;
     }
+    .fab:hover { transform: scale(1.1); }
 
-    .radio-option.active { border-color: var(--blue); background: var(--blue-muted); }
-    .radio-option:hover { border-color: rgba(59,130,246,0.3); }
-
-    .radio-circle {
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      border: 2px solid var(--text-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: border-color 0.2s;
-    }
-
-    .radio-option.active .radio-circle { border-color: var(--blue); }
-
-    .radio-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--blue);
-      display: none;
-    }
-
-    .radio-option.active .radio-dot { display: block; }
-
-    .radio-label { font-size: 14px; }
-
-    /* Switch Row */
-    .switch-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 0;
-    }
-
-    .switch-label { font-size: 15px; color: var(--text); }
-
-    /* ===== SETTINGS SCREEN ===== */
+    /* ===== SETTINGS ===== */
     .settings-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
+    .back-link { color: var(--blue); cursor: pointer; font-size: 14px; font-weight: 500; }
 
-    .back-btn { color: var(--blue); cursor: pointer; font-size: 15px; font-weight: 500; }
+    .settings-body { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
 
-    .settings-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 20px 30px;
+    .s-title { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin: 18px 0 8px; }
+
+    .s-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+
+    .s-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
     }
+    .s-row:last-child { border-bottom: none; }
+    .s-row-dim { color: var(--text-dim); font-size: 13px; }
 
-    .settings-section-title {
+    .s-explain {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
       font-size: 12px;
-      font-weight: 700;
       color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin: 22px 0 10px;
+      line-height: 1.5;
+      background: rgba(59,130,246,0.03);
     }
 
-    .settings-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-    }
-
-    .settings-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
+    .api-key-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--blue-light);
+      background: var(--bg-input);
+      padding: 10px 14px;
+      word-break: break-all;
+      user-select: all;
       cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .settings-row:last-child { border-bottom: none; }
-    .settings-row:hover { background: var(--bg-card-hover); }
-
-    .settings-row-label { font-size: 15px; }
-    .settings-row-value { font-size: 14px; color: var(--text-dim); }
-    .settings-row-chevron { color: var(--text-muted); font-size: 16px; }
-
-    .settings-row.danger .settings-row-label { color: var(--danger); }
-    .settings-row.danger .settings-row-chevron { color: var(--danger); }
-
-    .connection-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 16px;
       border-bottom: 1px solid var(--border);
     }
 
-    .conn-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-    }
-
+    .conn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .conn-dot.on { background: var(--success); box-shadow: 0 0 8px rgba(34,197,94,0.5); }
     .conn-dot.off { background: var(--danger); }
 
-    .module-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    /* ===== MODAL ===== */
+    .modal-bg {
+      display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      z-index: 50; align-items: flex-end;
     }
+    .modal-bg.active { display: flex; }
 
-    .module-icon { font-size: 18px; }
+    .modal {
+      width: 100%; max-height: 80%;
+      background: var(--bg);
+      border-top-left-radius: 20px; border-top-right-radius: 20px;
+      border: 1px solid var(--border); border-bottom: none;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-    /* ===== AUDIT LOG ===== */
-    .audit-entry {
+    .modal-bar { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 10px auto; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 20px 14px; }
+    .modal-title { font-size: 17px; font-weight: 700; }
+    .modal-close { color: var(--blue); cursor: pointer; font-size: 14px; font-weight: 600; }
+    .modal-body { padding: 0 20px 24px; }
+
+    .time-input { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 20px; }
+    .time-field {
+      font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700;
+      width: 90px; text-align: center;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 8px; color: var(--text); outline: none;
+    }
+    .time-field:focus { border-color: var(--blue); }
+    .time-colon { font-family: 'JetBrains Mono', monospace; font-size: 40px; color: var(--blue); }
+
+    .field { margin-bottom: 14px; }
+    .field-label { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+
+    .input {
+      width: 100%; padding: 11px 14px;
+      background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 14px; font-family: 'Inter', sans-serif; outline: none;
+    }
+    .input:focus { border-color: var(--blue); }
+
+    .days-row { display: flex; gap: 5px; }
+    .day-btn {
+      flex: 1; text-align: center; padding: 9px 0; border-radius: 8px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-dim); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+    }
+    .day-btn.active { background: var(--blue-muted); border-color: var(--blue); color: var(--blue); }
+
+    .radio-group { display: flex; flex-direction: column; gap: 6px; }
+    .radio-opt {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; cursor: pointer; transition: all 0.2s; font-size: 13px;
+    }
+    .radio-opt.active { border-color: var(--blue); background: var(--blue-muted); }
+    .radio-dot-wrap { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .radio-opt.active .radio-dot-wrap { border-color: var(--blue); }
+    .radio-dot-inner { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); display: none; }
+    .radio-opt.active .radio-dot-inner { display: block; }
+
+    /* Briefing player */
+    .briefing-player {
+      margin: 10px 20px;
       padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 14px;
+      display: none;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 12px;
     }
-
-    .audit-entry:last-child { border-bottom: none; }
-
-    .audit-action {
-      font-size: 13px;
-      color: var(--text);
-      font-weight: 500;
+    .briefing-player.active { display: flex; }
+    .bp-play {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--blue); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 14px; color: white; flex-shrink: 0;
     }
-
-    .audit-meta {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 3px;
-    }
-
-    .audit-actor {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      padding: 1px 6px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-right: 6px;
-    }
-
-    .audit-actor.bot { background: var(--blue-muted); color: var(--blue); }
-    .audit-actor.user { background: rgba(34,197,94,0.12); color: var(--success); }
-
-    /* Responsive */
-    @media (max-width: 500px) {
-      .phone-frame { border-radius: 0; border: none; }
-      .alarm-time { font-size: 30px; }
-      .time-digit { font-size: 44px; width: 80px; }
-      .modal { border-radius: 20px 20px 0 0; }
-    }
+    .bp-info { flex: 1; }
+    .bp-title { font-size: 13px; font-weight: 600; }
+    .bp-sub { font-size: 11px; color: var(--text-dim); }
+    .bp-wave { display: flex; align-items: center; gap: 2px; height: 20px; }
+    .bp-bar { width: 3px; border-radius: 2px; background: var(--blue); animation: wave 1s ease-in-out infinite; }
+    .bp-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+    .bp-bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+    .bp-bar:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+    .bp-bar:nth-child(4) { height: 20px; animation-delay: 0.45s; }
+    .bp-bar:nth-child(5) { height: 12px; animation-delay: 0.6s; }
+    @keyframes wave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.4); } }
   </style>
 </head>
 <body>
 
-<div class="phone-frame" id="app">
+<div class="phone" id="app">
 
   <!-- ===== ONBOARDING ===== -->
-  <div class="screen active" id="screen-onboarding">
-    <div class="onboarding">
+  <div class="screen active" id="s-onboarding">
+    <div class="ob">
       <div class="ob-progress">
-        <div class="ob-dot active" data-step="0"></div>
-        <div class="ob-dot" data-step="1"></div>
-        <div class="ob-dot" data-step="2"></div>
-        <div class="ob-dot" data-step="3"></div>
+        <div class="ob-dot active" data-s="0"></div>
+        <div class="ob-dot" data-s="1"></div>
+        <div class="ob-dot" data-s="2"></div>
       </div>
-      <div class="ob-content">
-        <div class="ob-icon" id="ob-icon">🔔</div>
-        <div class="ob-title" id="ob-title">Willkommen bei<br><span>AlarmBriefing</span></div>
-        <div class="ob-desc" id="ob-desc">Dein intelligenter Wecker mit Audio-Briefings. Starte den Tag informiert — automatisch.</div>
-        <div id="ob-extra"></div>
-      </div>
-      <div class="ob-footer">
-        <button class="btn btn-flex" id="ob-back" style="display:none" onclick="obBack()">Zurück</button>
-        <button class="btn btn-blue btn-flex" id="ob-next" onclick="obNext()">Weiter</button>
-      </div>
+      <div class="ob-body" id="ob-body"></div>
+      <div class="ob-footer" id="ob-footer"></div>
     </div>
   </div>
 
   <!-- ===== HOME ===== -->
-  <div class="screen" id="screen-home">
+  <div class="screen" id="s-home">
     <div class="home-header">
       <div>
         <div class="home-title">Alarm<span>Briefing</span></div>
-        <div class="home-subtitle" id="next-alarm-text">Nächster Alarm: 06:30</div>
+        <div class="home-sub" id="home-sub">3 Alarme aktiv</div>
       </div>
-      <div class="settings-btn" onclick="showScreen('settings')">⚙</div>
+      <div class="icon-btn" onclick="showScreen('settings')">⚙</div>
     </div>
 
-    <div class="status-bar">
-      <div class="status-dot"></div>
-      <span class="status-text" id="status-active">3 aktive Alarme</span>
-      <span class="status-sep">•</span>
-      <span class="status-text" id="status-bot">2 Bot-verwaltet</span>
+    <div class="next-alarm" id="next-alarm">
+      <div class="next-alarm-icon">⏰</div>
+      <div>
+        <div class="next-alarm-time" id="na-time">06:30</div>
+        <div class="next-alarm-label" id="na-label">Morgenwecker · in 7h 23min</div>
+        <div class="next-alarm-briefing" id="na-briefing">☀ Briefing: Wetter, News, Kalender</div>
+      </div>
+    </div>
+
+    <div class="briefing-player" id="briefing-player">
+      <div class="bp-play" onclick="toggleBriefingPlay()">▶</div>
+      <div class="bp-info">
+        <div class="bp-title">Morgenbriefing</div>
+        <div class="bp-sub">Wetter 14°C, 2 Termine, 3 News</div>
+      </div>
+      <div class="bp-wave" id="bp-wave" style="display:none">
+        <div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div>
+      </div>
     </div>
 
     <div class="alarm-list" id="alarm-list"></div>
-
-    <div class="fab" onclick="openAlarmModal()">+</div>
+    <div class="fab" onclick="openModal()">+</div>
   </div>
 
   <!-- ===== SETTINGS ===== -->
-  <div class="screen" id="screen-settings">
+  <div class="screen" id="s-settings">
     <div class="settings-header">
-      <span class="back-btn" onclick="showScreen('home')">← Zurück</span>
-      <span style="font-weight:600;font-size:17px">Einstellungen</span>
-      <span style="width:60px"></span>
+      <span class="back-link" onclick="showScreen('home')">← Zurück</span>
+      <span style="font-weight:600;font-size:16px">Einstellungen</span>
+      <span style="width:50px"></span>
     </div>
     <div class="settings-body">
-      <div class="settings-section-title">Bot-Verbindung</div>
-      <div class="settings-card">
-        <div class="connection-row">
-          <div class="conn-dot on" id="conn-dot"></div>
-          <span class="status-text" id="conn-status">Verbunden</span>
+
+      <div class="s-title">Bot-Verbindung</div>
+      <div class="s-card">
+        <div class="s-explain">
+          Damit dein Clawdbot Alarme erstellen und Briefings generieren kann, braucht er diesen API-Key.
+          Kopiere den Key und fuege ihn in deinem Bot als <b>ALARMBRIEFING_API_KEY</b> ein.
+          Der Bot kann dann Wecker setzen, aendern und loeschen — und TTS-Briefings fuer dich generieren.
         </div>
-        <div class="settings-row">
-          <input class="input" placeholder="Bot-API-Key..." style="margin:0;border:none;background:transparent" id="bot-key-input">
+        <div class="s-row">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="conn-dot on" id="conn-dot"></div>
+            <span id="conn-label">Bot verbunden</span>
+          </div>
         </div>
-        <div style="padding:10px 16px 14px">
-          <button class="btn btn-blue btn-sm btn-full" onclick="testBotConnection()">Verbindung testen</button>
+        <div class="api-key-display" id="api-key-display" onclick="copyApiKey()"></div>
+        <div style="padding:8px 14px 12px;display:flex;gap:8px">
+          <button class="btn btn-sm btn-flex" onclick="copyApiKey()">📋 Key kopieren</button>
+          <button class="btn btn-sm btn-flex btn-blue" onclick="regenerateKey()">🔄 Neu generieren</button>
         </div>
       </div>
 
-      <div class="settings-section-title">Audio</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <span class="settings-row-label">Stimme</span>
-          <span class="settings-row-value">Alloy</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-row-label">Sprechtempo</span>
-          <span class="settings-row-value">1.0x</span>
-        </div>
+      <div class="s-title">Briefing-Quellen</div>
+      <div class="s-card">
+        <div class="s-explain">Waehle welche Infos dein Morgenbriefing enthalten soll. Der Bot sammelt diese Daten und erstellt ein Audio-Briefing (wie Jarvis).</div>
+        <div class="s-row"><span>🌤 Wetter</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="s-row"><span>📅 Kalender</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="s-row"><span>📰 Nachrichten</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="s-row"><span>✅ Aufgaben</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
       </div>
 
-      <div class="settings-section-title">Briefing-Quellen</div>
-      <div class="settings-card" id="modules-list"></div>
-
-      <div class="settings-section-title">Briefing-Länge</div>
-      <div class="settings-card">
-        <div class="settings-row" onclick="this.style.background='var(--blue-muted)'">
-          <span class="settings-row-label">Kurz (10-30s)</span><span class="settings-row-value"></span>
-        </div>
-        <div class="settings-row" style="background:var(--blue-muted)">
-          <span class="settings-row-label" style="color:var(--blue)">Standard (1-3 min)</span><span style="color:var(--blue)">✓</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-row-label">Lang (3-5 min)</span><span class="settings-row-value"></span>
-        </div>
+      <div class="s-title">Audio</div>
+      <div class="s-card">
+        <div class="s-explain">Stimme und Tempo fuer dein Audio-Briefing. Wird ueber die Lautsprecher abgespielt wenn der Alarm klingelt.</div>
+        <div class="s-row"><span>Stimme</span><span class="s-row-dim">Jarvis (Standard)</span></div>
+        <div class="s-row"><span>Sprechtempo</span><span class="s-row-dim">1.0x</span></div>
+        <div class="s-row"><span>Lautstärke</span><span class="s-row-dim">System</span></div>
       </div>
 
-      <div class="settings-section-title">Datenschutz</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <span class="settings-row-label">Telemetrie</span>
-          <div class="toggle" onclick="this.classList.toggle('on')"></div>
-        </div>
-        <div class="settings-row">
-          <span class="settings-row-label">Daten exportieren</span>
-          <span class="settings-row-chevron">→</span>
-        </div>
-        <div class="settings-row danger">
-          <span class="settings-row-label">Account löschen</span>
-          <span class="settings-row-chevron">→</span>
-        </div>
+      <div class="s-title">Standort</div>
+      <div class="s-card">
+        <div class="s-explain">Für lokales Wetter im Briefing. Wird nur für Wetterdaten verwendet.</div>
+        <div class="s-row"><span>📍 Standort</span><span class="s-row-dim" id="location-val">Berlin, DE</span></div>
       </div>
 
-      <div class="settings-section-title">Bot-Aktivitäten (Audit-Log)</div>
-      <div class="settings-card" id="audit-log"></div>
+      <div class="s-title">Bot-Aktivitäten</div>
+      <div class="s-card" id="audit-log"></div>
     </div>
   </div>
-</div>
 
-<!-- Alarm Modal -->
-<div class="modal-overlay" id="alarm-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <span class="modal-title" id="modal-title">Neuer Wecker</span>
-      <span class="modal-close" onclick="closeAlarmModal()">Fertig</span>
-    </div>
-    <div class="modal-body">
-      <div class="time-display">
-        <input class="time-digit" id="edit-hours" value="07" maxlength="2">
-        <span class="time-sep">:</span>
-        <input class="time-digit" id="edit-minutes" value="00" maxlength="2">
+  <!-- ===== ALARM MODAL ===== -->
+  <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-bar"></div>
+      <div class="modal-head">
+        <span class="modal-title">Neuer Wecker</span>
+        <span class="modal-close" onclick="closeModal()">Fertig</span>
       </div>
-
-      <div class="section">
-        <div class="section-label">Name</div>
-        <input class="input" id="edit-name" value="Morgenwecker">
-      </div>
-
-      <div class="section">
-        <div class="section-label">Wochentage</div>
-        <div class="days-grid" id="edit-days"></div>
-      </div>
-
-      <div class="section">
-        <div class="section-label">Briefing-Modus</div>
-        <div class="radio-group" id="edit-briefing"></div>
-      </div>
-
-      <div class="section">
-        <div class="switch-row">
-          <span class="switch-label">Snooze</span>
-          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      <div class="modal-body">
+        <div class="time-input">
+          <input class="time-field" id="m-hours" value="07" maxlength="2">
+          <span class="time-colon">:</span>
+          <input class="time-field" id="m-minutes" value="00" maxlength="2">
         </div>
-      </div>
-
-      <div class="section">
-        <div class="switch-row">
-          <span class="switch-label">Vibration</span>
-          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        <div class="field">
+          <div class="field-label">Name</div>
+          <input class="input" id="m-name" placeholder="z.B. Morgenwecker">
         </div>
+        <div class="field">
+          <div class="field-label">Wochentage</div>
+          <div class="days-row" id="m-days"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Briefing</div>
+          <div class="radio-group" id="m-briefing"></div>
+        </div>
+        <button class="btn btn-blue btn-full" onclick="saveAlarm()" style="margin-top:8px">Speichern</button>
       </div>
-
-      <button class="btn btn-blue btn-full" onclick="saveAlarm()" style="margin-top:10px">Wecker speichern</button>
     </div>
   </div>
 </div>
 
 <script>
-  // ===== DATA =====
-  const DAY_LABELS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
-  const MODULES = [
-    { id: 'weather', name: 'Wetter', icon: '🌤', enabled: true },
-    { id: 'calendar', name: 'Kalender', icon: '📅', enabled: true },
-    { id: 'news', name: 'Nachrichten', icon: '📰', enabled: true },
-    { id: 'tasks', name: 'Aufgaben', icon: '✅', enabled: false },
-  ];
+const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const STORAGE_KEY = 'ab_onboarded';
+const API_KEY_STORE = 'ab_api_key';
+const ALARMS_STORE = 'ab_alarms';
 
-  let alarms = [
-    { id:'1', name:'Morgenwecker', active:true, time:'06:30', days:[1,2,3,4,5], briefingMode:'standard', managedBy:'bot', snooze:true },
-    { id:'2', name:'Workout', active:true, time:'07:15', days:[1,3,5], briefingMode:'short', managedBy:'bot', snooze:false },
-    { id:'3', name:'Meeting Prep', active:true, time:'08:45', days:[1,2,3,4,5], briefingMode:'standard', managedBy:'manual', snooze:true },
-    { id:'4', name:'Wochenende', active:false, time:'09:00', days:[0,6], briefingMode:'none', managedBy:'manual', snooze:true },
-  ];
-
-  const auditEntries = [
-    { actor:'bot', action:'Wecker "Morgenwecker" erstellt', time:'Heute, 05:30', details:'06:30, Mo-Fr, Standardbriefing' },
-    { actor:'bot', action:'Wecker "Workout" Zeit geändert', time:'Heute, 05:31', details:'07:00 → 07:15' },
-    { actor:'bot', action:'Briefing generiert für "Morgenwecker"', time:'Heute, 06:25', details:'Wetter, News, Kalender' },
-    { actor:'user', action:'Wecker "Meeting Prep" erstellt', time:'Gestern, 21:15', details:'08:45, Mo-Fr' },
-    { actor:'bot', action:'Briefing gecacht', time:'Gestern, 22:00', details:'Offline-Fallback vorbereitet' },
-  ];
-
-  let editDays = [1,2,3,4,5];
-  let editBriefing = 'standard';
-
-  // ===== ONBOARDING =====
-  let obStep = 0;
-  const obData = [
-    { icon:'🔔', title:'Willkommen bei<br><span>AlarmBriefing</span>', desc:'Dein intelligenter Wecker mit Audio-Briefings. Starte den Tag informiert — automatisch.', extra:'' },
-    { icon:'🔑', title:'Account erstellen', desc:'Melde dich an, um deine Wecker geräteübergreifend zu synchronisieren.',
-      extra:'<div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-top:28px"><button class="btn btn-blue btn-full" onclick="obNext()"> Mit Apple anmelden</button><button class="btn btn-full" onclick="obNext()"> Mit Google anmelden</button><button class="btn btn-full" onclick="obNext()">📧 Mit E-Mail anmelden</button></div>' },
-    { icon:'🤖', title:'Bot verbinden', desc:'Verbinde deinen Clawdbot, damit er Wecker und Briefings automatisch verwaltet.',
-      extra:'<div style="width:100%;margin-top:24px"><input class="input" placeholder="Bot-API-Key einfügen..." style="margin-bottom:12px"><button class="btn btn-blue btn-full btn-sm" onclick="obNext()">Verbindung testen</button><div style="text-align:center;margin-top:14px;color:var(--text-dim);font-size:14px;cursor:pointer" onclick="obNext()">Später verbinden →</div></div>' },
-    { icon:'✅', title:'Alles bereit!', desc:'Dein Bot kann jetzt Wecker erstellen, Briefings generieren und deinen Morgen optimieren.', extra:'' },
-  ];
-
-  function obRender() {
-    const d = obData[obStep];
-    document.getElementById('ob-icon').textContent = d.icon;
-    document.getElementById('ob-title').innerHTML = d.title;
-    document.getElementById('ob-desc').textContent = d.desc;
-    document.getElementById('ob-extra').innerHTML = d.extra;
-    document.getElementById('ob-back').style.display = obStep > 0 ? '' : 'none';
-    document.getElementById('ob-next').textContent = obStep === obData.length - 1 ? 'Loslegen' : 'Weiter';
-    // Hide next btn on login/bot steps (buttons are in extra)
-    document.getElementById('ob-next').style.display = (obStep === 1 || obStep === 2) ? 'none' : '';
-    document.querySelectorAll('.ob-dot').forEach((dot, i) => {
-      dot.className = 'ob-dot' + (i <= obStep ? ' active' : '');
-    });
-  }
-
-  function obNext() {
-    if (obStep < obData.length - 1) { obStep++; obRender(); }
-    else { showScreen('home'); }
-  }
-
-  function obBack() {
-    if (obStep > 0) { obStep--; obRender(); }
-  }
-
-  // ===== SCREENS =====
-  function showScreen(name) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen-' + name).classList.add('active');
-    if (name === 'home') renderAlarms();
-    if (name === 'settings') renderSettings();
-  }
-
-  // ===== ALARMS =====
-  function renderAlarms() {
-    const list = document.getElementById('alarm-list');
-    const sorted = [...alarms].sort((a,b) => {
-      if (a.active !== b.active) return a.active ? -1 : 1;
-      return a.time.localeCompare(b.time);
-    });
-
-    const activeCount = alarms.filter(a => a.active).length;
-    const botCount = alarms.filter(a => a.managedBy === 'bot').length;
-    document.getElementById('status-active').textContent = `${activeCount} aktive Alarme`;
-    document.getElementById('status-bot').textContent = `${botCount} Bot-verwaltet`;
-
-    const next = sorted.find(a => a.active);
-    document.getElementById('next-alarm-text').textContent = next ? `Nächster Alarm: ${next.time}` : 'Keine aktiven Alarme';
-
-    list.innerHTML = sorted.map(a => {
-      const briefLabel = a.briefingMode === 'none' ? 'Nur Alarm' : a.briefingMode === 'short' ? 'Kurzbriefing' : 'Standardbriefing';
-      const daysHtml = a.days.length > 0
-        ? a.days.map(d => `<span class="day-badge">${DAY_LABELS[d]}</span>`).join('')
-        : '<span class="day-badge">Einmalig</span>';
-      return `
-        <div class="alarm-card ${a.active ? 'active' : 'inactive'}" onclick="openAlarmDetail('${a.id}')">
-          <div class="alarm-left">
-            <div class="alarm-time">${a.time}</div>
-            <div class="alarm-name">${a.name}</div>
-            <div class="alarm-days">${daysHtml}</div>
-          </div>
-          <div class="alarm-right">
-            ${a.managedBy === 'bot' ? '<span class="bot-badge">BOT</span>' : ''}
-            <span class="briefing-label">${briefLabel}</span>
-            <div class="toggle ${a.active ? 'on' : ''}" onclick="event.stopPropagation();toggleAlarm('${a.id}')"></div>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  function toggleAlarm(id) {
-    const a = alarms.find(x => x.id === id);
-    if (a) { a.active = !a.active; renderAlarms(); }
-  }
-
-  // ===== ALARM MODAL =====
-  function openAlarmModal() {
-    editDays = [1,2,3,4,5];
-    editBriefing = 'standard';
-    document.getElementById('edit-hours').value = '07';
-    document.getElementById('edit-minutes').value = '00';
-    document.getElementById('edit-name').value = '';
-    document.getElementById('modal-title').textContent = 'Neuer Wecker';
-    renderModalDays();
-    renderModalBriefing();
-    document.getElementById('alarm-modal').classList.add('active');
-  }
-
-  function openAlarmDetail(id) {
-    const a = alarms.find(x => x.id === id);
-    if (!a) return;
-    editDays = [...a.days];
-    editBriefing = a.briefingMode;
-    document.getElementById('edit-hours').value = a.time.split(':')[0];
-    document.getElementById('edit-minutes').value = a.time.split(':')[1];
-    document.getElementById('edit-name').value = a.name;
-    document.getElementById('modal-title').textContent = a.name;
-    renderModalDays();
-    renderModalBriefing();
-    document.getElementById('alarm-modal').classList.add('active');
-  }
-
-  function closeAlarmModal() {
-    document.getElementById('alarm-modal').classList.remove('active');
-  }
-
-  function renderModalDays() {
-    document.getElementById('edit-days').innerHTML = DAY_LABELS.map((l, i) =>
-      `<div class="day-btn ${editDays.includes(i) ? 'active' : ''}" onclick="toggleEditDay(${i})">${l}</div>`
-    ).join('');
-  }
-
-  function toggleEditDay(d) {
-    if (editDays.includes(d)) editDays = editDays.filter(x => x !== d);
-    else editDays.push(d);
-    renderModalDays();
-  }
-
-  function renderModalBriefing() {
-    const modes = [
-      { key:'none', label:'Nur Alarm' },
-      { key:'short', label:'Kurzbriefing (10-30s)' },
-      { key:'standard', label:'Standardbriefing (1-3 min)' },
-    ];
-    document.getElementById('edit-briefing').innerHTML = modes.map(m =>
-      `<div class="radio-option ${editBriefing===m.key?'active':''}" onclick="editBriefing='${m.key}';renderModalBriefing()">
-        <div class="radio-circle"><div class="radio-dot"></div></div>
-        <span class="radio-label">${m.label}</span>
-      </div>`
-    ).join('');
-  }
-
-  function saveAlarm() {
-    const h = document.getElementById('edit-hours').value.padStart(2,'0');
-    const m = document.getElementById('edit-minutes').value.padStart(2,'0');
-    const name = document.getElementById('edit-name').value || 'Alarm';
-    alarms.push({
-      id: Date.now().toString(), name, active: true,
-      time: `${h}:${m}`, days: [...editDays],
-      briefingMode: editBriefing, managedBy: 'manual', snooze: true
-    });
-    closeAlarmModal();
-    renderAlarms();
-  }
-
-  // ===== SETTINGS =====
-  function renderSettings() {
-    // Modules
-    document.getElementById('modules-list').innerHTML = MODULES.map(m =>
-      `<div class="settings-row">
-        <div class="module-row"><span class="module-icon">${m.icon}</span><span class="settings-row-label">${m.name}</span></div>
-        <div class="toggle ${m.enabled ? 'on' : ''}" onclick="this.classList.toggle('on')"></div>
-      </div>`
-    ).join('');
-
-    // Audit
-    document.getElementById('audit-log').innerHTML = auditEntries.map(e =>
-      `<div class="audit-entry">
-        <div class="audit-action"><span class="audit-actor ${e.actor}">${e.actor.toUpperCase()}</span>${e.action}</div>
-        <div class="audit-meta">${e.time} — ${e.details}</div>
-      </div>`
-    ).join('');
-  }
-
-  function testBotConnection() {
-    const dot = document.getElementById('conn-dot');
-    const status = document.getElementById('conn-status');
-    dot.className = 'conn-dot on';
-    status.textContent = 'Verbunden ✓';
-  }
-
-  // Close modal on overlay click
-  document.getElementById('alarm-modal').addEventListener('click', function(e) {
-    if (e.target === this) closeAlarmModal();
+// ===== API KEY =====
+function getApiKey() {
+  let k = localStorage.getItem(API_KEY_STORE);
+  if (!k) { k = generateKey(); localStorage.setItem(API_KEY_STORE, k); }
+  return k;
+}
+function generateKey() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let r = 'ab_';
+  for (let i = 0; i < 32; i++) r += chars[Math.floor(Math.random() * chars.length)];
+  return r;
+}
+function regenerateKey() {
+  const k = generateKey();
+  localStorage.setItem(API_KEY_STORE, k);
+  document.getElementById('api-key-display').textContent = k;
+}
+function copyApiKey() {
+  navigator.clipboard.writeText(getApiKey()).then(() => {
+    const el = document.getElementById('api-key-display');
+    const orig = el.textContent;
+    el.textContent = '✓ Kopiert!';
+    setTimeout(() => el.textContent = orig, 1500);
   });
+}
 
-  // Init
-  obRender();
+// ===== ALARMS =====
+let alarms = JSON.parse(localStorage.getItem(ALARMS_STORE)) || [
+  { id:'1', name:'Morgenwecker', on:true, time:'06:30', days:[1,2,3,4,5], briefing:'standard', bot:true },
+  { id:'2', name:'Workout', on:true, time:'07:15', days:[1,3,5], briefing:'short', bot:true },
+  { id:'3', name:'Meeting Prep', on:true, time:'08:45', days:[1,2,3,4,5], briefing:'standard', bot:false },
+  { id:'4', name:'Wochenende', on:false, time:'09:00', days:[0,6], briefing:'none', bot:false },
+];
+function saveAlarms() { localStorage.setItem(ALARMS_STORE, JSON.stringify(alarms)); }
+
+const auditLog = [
+  { who:'BOT', text:'Wecker "Morgenwecker" erstellt', when:'Heute, 05:30' },
+  { who:'BOT', text:'Briefing generiert: Wetter 14°C, 2 Termine', when:'Heute, 06:25' },
+  { who:'BOT', text:'Wecker "Workout" Zeit → 07:15', when:'Heute, 05:31' },
+  { who:'USER', text:'Wecker "Meeting Prep" erstellt', when:'Gestern, 21:15' },
+];
+
+// ===== ONBOARDING =====
+let obStep = 0;
+const obSteps = [
+  {
+    icon: '🔔',
+    title: 'Willkommen bei<br><span>AlarmBriefing</span>',
+    desc: 'Dein intelligenter Wecker mit Audio-Briefings — wie Jarvis. Wach auf und hoere sofort Wetter, Termine und News ueber deine Lautsprecher.',
+    extra: '',
+    btns: [{ text:'Los geht\'s', blue:true, fn:'obNext()' }]
+  },
+  {
+    icon: '🤖',
+    title: 'Bot-Verbindung',
+    desc: 'Dein Clawdbot steuert die App. Er erstellt Wecker, generiert Briefings und spielt sie ab wenn der Alarm klingelt.',
+    extra: () => `
+      <div class="ob-explain">
+        <div class="ob-explain-title">So funktioniert's</div>
+        <p>1. Die App generiert einen <b>API-Key</b> fuer dich</p>
+        <p>2. Gib diesen Key deinem Clawdbot</p>
+        <p>3. Der Bot kann dann Alarme setzen und Briefings erstellen</p>
+        <p>4. Beim Alarm hoerst du das Briefing ueber deine Lautsprecher</p>
+      </div>
+      <div class="ob-explain" style="margin-top:8px">
+        <div class="ob-explain-title">Dein API-Key</div>
+        <p>Kopiere diesen Key und fuege ihn als <code>ALARMBRIEFING_API_KEY</code> in deinem Bot ein:</p>
+      </div>
+      <div class="ob-key-box" onclick="navigator.clipboard.writeText(this.textContent)">${getApiKey()}</div>
+      <div style="font-size:12px;color:var(--text-muted)">Antippen zum Kopieren</div>
+    `,
+    btns: [{ text:'Zurück', blue:false, fn:'obBack()' }, { text:'Weiter', blue:true, fn:'obNext()' }]
+  },
+  {
+    icon: '✅',
+    title: 'Alles bereit!',
+    desc: 'Dein Bot kann jetzt Wecker erstellen und Briefings generieren. Morgens wirst du wie Tony Stark geweckt.',
+    extra: () => `
+      <div class="ob-explain">
+        <div class="ob-explain-title">Was dein Bot kann</div>
+        <p>⏰ Wecker erstellen, aendern, loeschen</p>
+        <p>🎙 Audio-Briefings generieren (TTS)</p>
+        <p>🌤 Wetter, Kalender, News einbinden</p>
+        <p>🔊 Briefing ueber Lautsprecher abspielen</p>
+      </div>
+    `,
+    btns: [{ text:'Zurück', blue:false, fn:'obBack()' }, { text:'App starten', blue:true, fn:'finishOnboarding()' }]
+  }
+];
+
+function renderOb() {
+  const s = obSteps[obStep];
+  const extra = typeof s.extra === 'function' ? s.extra() : s.extra;
+  document.getElementById('ob-body').innerHTML = `
+    <div class="ob-icon">${s.icon}</div>
+    <div class="ob-title">${s.title}</div>
+    <div class="ob-desc">${s.desc}</div>
+    ${extra}
+  `;
+  document.getElementById('ob-footer').innerHTML = s.btns.map(b =>
+    `<button class="btn btn-flex ${b.blue?'btn-blue':''}" onclick="${b.fn}">${b.text}</button>`
+  ).join('');
+  document.querySelectorAll('.ob-dot').forEach((d,i) => d.className = 'ob-dot' + (i <= obStep ? ' active' : ''));
+}
+
+function obNext() { if (obStep < obSteps.length-1) { obStep++; renderOb(); } }
+function obBack() { if (obStep > 0) { obStep--; renderOb(); } }
+function finishOnboarding() { localStorage.setItem(STORAGE_KEY, '1'); showScreen('home'); }
+
+// ===== SCREENS =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  if (id === 'home') renderHome();
+  if (id === 'settings') renderSettings();
+}
+
+// ===== HOME =====
+function renderHome() {
+  const sorted = [...alarms].sort((a,b) => a.on === b.on ? a.time.localeCompare(b.time) : a.on ? -1 : 1);
+  const active = alarms.filter(a => a.on);
+  document.getElementById('home-sub').textContent = `${active.length} Alarm${active.length!==1?'e':''} aktiv`;
+
+  const next = sorted.find(a => a.on);
+  if (next) {
+    document.getElementById('na-time').textContent = next.time;
+    document.getElementById('na-label').textContent = next.name;
+    const bl = next.briefing === 'none' ? 'Nur Alarm' : next.briefing === 'short' ? 'Kurzbriefing' : 'Wetter, News, Kalender';
+    document.getElementById('na-briefing').textContent = next.briefing !== 'none' ? '🎙 Briefing: ' + bl : '🔕 Kein Briefing';
+    document.getElementById('next-alarm').style.display = 'flex';
+  } else {
+    document.getElementById('next-alarm').style.display = 'none';
+  }
+
+  // Show briefing player for demo
+  const bp = document.getElementById('briefing-player');
+  if (active.some(a => a.briefing !== 'none')) bp.classList.add('active');
+  else bp.classList.remove('active');
+
+  document.getElementById('alarm-list').innerHTML = sorted.map(a => {
+    const daysHtml = a.days.length ? a.days.map(d => `<span class="day-tag">${DAYS[d]}</span>`).join('') : '<span class="day-tag">Einmalig</span>';
+    const briefLbl = a.briefing === 'none' ? 'Nur Alarm' : a.briefing === 'short' ? 'Kurzbriefing' : 'Standardbriefing';
+    return `<div class="alarm-card ${a.on?'':'inactive'}" onclick="openDetail('${a.id}')">
+      <div>
+        <div class="alarm-time">${a.time}</div>
+        <div class="alarm-meta">${a.name} · ${briefLbl} ${a.bot?'<span class="bot-tag">BOT</span>':''}</div>
+        <div class="alarm-days">${daysHtml}</div>
+      </div>
+      <div class="toggle ${a.on?'on':''}" onclick="event.stopPropagation();toggleAlarm('${a.id}')"></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAlarm(id) {
+  const a = alarms.find(x=>x.id===id);
+  if (a) { a.on = !a.on; saveAlarms(); renderHome(); }
+}
+
+function toggleBriefingPlay() {
+  const w = document.getElementById('bp-wave');
+  const p = document.querySelector('.bp-play');
+  if (w.style.display === 'none') { w.style.display = 'flex'; p.textContent = '⏸'; }
+  else { w.style.display = 'none'; p.textContent = '▶'; }
+}
+
+// ===== SETTINGS =====
+function renderSettings() {
+  document.getElementById('api-key-display').textContent = getApiKey();
+  document.getElementById('audit-log').innerHTML = auditLog.map(e => `
+    <div class="s-row" style="flex-direction:column;align-items:flex-start;gap:2px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border-radius:4px;background:${e.who==='BOT'?'var(--blue-muted)':'rgba(34,197,94,0.12)'};color:${e.who==='BOT'?'var(--blue)':'var(--success)'}">${e.who}</span>
+        <span style="font-size:13px">${e.text}</span>
+      </div>
+      <span style="font-size:11px;color:var(--text-muted)">${e.when}</span>
+    </div>
+  `).join('');
+}
+
+// ===== MODAL =====
+let editDays = [1,2,3,4,5], editBriefing = 'standard';
+
+function openModal() {
+  editDays = [1,2,3,4,5]; editBriefing = 'standard';
+  document.getElementById('m-hours').value = '07';
+  document.getElementById('m-minutes').value = '00';
+  document.getElementById('m-name').value = '';
+  renderModalDays(); renderModalBriefing();
+  document.getElementById('modal').classList.add('active');
+}
+function openDetail(id) {
+  const a = alarms.find(x=>x.id===id);
+  if (!a) return;
+  editDays = [...a.days]; editBriefing = a.briefing;
+  document.getElementById('m-hours').value = a.time.split(':')[0];
+  document.getElementById('m-minutes').value = a.time.split(':')[1];
+  document.getElementById('m-name').value = a.name;
+  renderModalDays(); renderModalBriefing();
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+function renderModalDays() {
+  document.getElementById('m-days').innerHTML = DAYS.map((l,i) =>
+    `<div class="day-btn ${editDays.includes(i)?'active':''}" onclick="editDays.includes(${i})?editDays=editDays.filter(x=>x!==${i}):editDays.push(${i});renderModalDays()">${l}</div>`
+  ).join('');
+}
+function renderModalBriefing() {
+  const opts = [['none','Nur Alarm — kein Briefing'],['short','Kurzbriefing (10-30 Sek.)'],['standard','Vollbriefing (1-3 Min.)']];
+  document.getElementById('m-briefing').innerHTML = opts.map(([k,l]) =>
+    `<div class="radio-opt ${editBriefing===k?'active':''}" onclick="editBriefing='${k}';renderModalBriefing()">
+      <div class="radio-dot-wrap"><div class="radio-dot-inner"></div></div><span>${l}</span>
+    </div>`
+  ).join('');
+}
+function saveAlarm() {
+  const h = document.getElementById('m-hours').value.padStart(2,'0');
+  const m = document.getElementById('m-minutes').value.padStart(2,'0');
+  alarms.push({ id: Date.now()+'', name: document.getElementById('m-name').value||'Alarm', on:true, time:`${h}:${m}`, days:[...editDays], briefing:editBriefing, bot:false });
+  saveAlarms(); closeModal(); renderHome();
+}
+
+// ===== INIT =====
+if (localStorage.getItem(STORAGE_KEY)) {
+  showScreen('home');
+} else {
+  renderOb();
+}
 </script>
 </body>
 </html>
