@@ -395,8 +395,13 @@ function showScreen(id) {
 }
 
 // === HOME ===
+function normalizeAlarm(a){
+  return {id:a.id, name:a.name, active:a.active, time:a.time, days:a.days||[],
+    managedBy:a.managed_by||a.managedBy||'manual', briefingMode:a.briefing_mode||a.briefingMode||'auto',
+    userId:a.user_id||a.userId};
+}
 async function loadAlarms() {
-  try { const d = await api('/api/alarms'); alarms = d.alarms||[]; renderHome(); }
+  try { const d = await api('/api/alarms'); alarms = (d.alarms||[]).map(normalizeAlarm); renderHome(); }
   catch(e) { console.error(e); renderHome(); }
 }
 
