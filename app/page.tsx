@@ -1,13 +1,7 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-// AlarmBriefing — Single Page App
-// Serves the complete UI as a single client component to keep it simple and fast.
-// All API calls go to /api/* routes on the same domain.
-
+// Landing page is at /index.html (static)
+// This catches the Next.js route and redirects
 export default function Home() {
-  return (
-    <div dangerouslySetInnerHTML={{ __html: `
-      <script>window.location.href = '/app.html';</script>
-    `}} />
-  );
+  redirect('/index.html');
 }

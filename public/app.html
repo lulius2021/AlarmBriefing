@@ -240,11 +240,23 @@
       <div class="s-title">Account</div>
       <div class="s-card">
         <div class="s-row"><span>Email</span><span class="s-dim" id="s-email">-</span></div>
-        <div class="s-row danger" style="cursor:pointer" onclick="logout()"><span>Abmelden</span><span>→</span></div>
+        <div class="s-row" style="cursor:pointer" onclick="exportData()"><span>📦 Daten exportieren</span><span class="s-dim">→</span></div>
+        <div class="s-row" style="cursor:pointer" onclick="logout()"><span>🚪 Abmelden</span><span class="s-dim">→</span></div>
+        <div class="s-row danger" style="cursor:pointer" onclick="deleteAccount()"><span>🗑 Account loeschen</span><span class="s-dim">→</span></div>
+      </div>
+
+      <div class="s-title">Rechtliches</div>
+      <div class="s-card">
+        <a href="/privacy.html" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>Datenschutzerklaerung</span><span class="s-dim">→</span></div></a>
+        <a href="/terms.html" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>Nutzungsbedingungen</span><span class="s-dim">→</span></div></a>
+        <a href="/imprint.html" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>Impressum</span><span class="s-dim">→</span></div></a>
+        <a href="/support.html" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>Support & Hilfe</span><span class="s-dim">→</span></div></a>
       </div>
 
       <div class="s-title">Bot-Aktivitäten</div>
       <div class="s-card" id="audit-log"><div class="s-row"><span class="s-dim">Noch keine Aktivitaeten</span></div></div>
+
+      <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text-muted)">AlarmBriefing v1.0.0</div>
     </div>
   </div>
 
@@ -476,6 +488,26 @@ async function saveAlarm(){
     await api('/api/alarms',{method:'POST',body:JSON.stringify({name,time:`${h}:${m}`,days:editDays,briefingMode:'auto'})});
     closeModal();loadAlarms();
   }catch(e){alert(e.message)}
+}
+
+// === ACCOUNT ===
+async function deleteAccount(){
+  if(!confirm('Account wirklich loeschen? Alle Daten werden unwiderruflich geloescht:\n\n- Account & Login\n- Alle Wecker\n- Alle API-Keys\n- Alle Briefings\n- Audit-Logs\n\nDas kann nicht rueckgaengig gemacht werden.')) return;
+  if(!confirm('Bist du sicher? Letzte Chance.')) return;
+  try{
+    await api('/api/auth/delete',{method:'DELETE'});
+    token=null;user=null;
+    localStorage.clear();
+    showScreen('auth');
+  }catch(e){alert('Fehler: '+e.message+'\n\nAlternativ per Email an support@alarmbriefing.app')}
+}
+
+function exportData(){
+  const data={user,alarms,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='alarmbriefing-export.json';a.click();
+  URL.revokeObjectURL(url);
 }
 
 // === INIT ===

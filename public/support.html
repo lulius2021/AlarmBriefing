@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support — AlarmBriefing</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0;line-height:1.7;padding:24px}
+    .wrap{max-width:700px;margin:0 auto}
+    a{color:#60a5fa}
+    h1{font-size:24px;font-weight:700;margin-bottom:8px}
+    .sub{font-size:14px;color:#64748b;margin-bottom:32px}
+    h2{font-size:18px;font-weight:700;margin:28px 0 8px;color:#3b82f6}
+    p{font-size:14px;color:#94a3b8;margin-bottom:12px}
+    .back{display:inline-block;color:#3b82f6;font-size:14px;margin-bottom:20px}
+    .card{background:#111827;border:1px solid #1e2a42;border-radius:12px;padding:20px;margin-bottom:16px}
+    .card h3{font-size:15px;font-weight:600;margin-bottom:6px;color:#e2e8f0}
+    .card p{margin-bottom:4px}
+    .contact-btn{display:inline-block;padding:12px 24px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:white;border-radius:12px;font-weight:600;font-size:14px;margin-top:8px}
+    .contact-btn:hover{text-decoration:none;opacity:0.9}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="back">← Zurück zur Startseite</a>
+  <h1>Support</h1>
+  <p class="sub">Brauchst du Hilfe? Hier findest du Antworten und Kontaktmöglichkeiten.</p>
+
+  <h2>Häufige Fragen</h2>
+
+  <div class="card">
+    <h3>Was ist ein API-Key und wozu brauche ich den?</h3>
+    <p>Der API-Key verbindet deinen Clawdbot mit der AlarmBriefing App. Der Bot kann damit Wecker erstellen und Briefings generieren. Generiere den Key in der App unter Einstellungen → Bot-Verbindung.</p>
+  </div>
+
+  <div class="card">
+    <h3>Wie verbinde ich meinen Bot?</h3>
+    <p>1. Öffne die App und gehe in die Einstellungen</p>
+    <p>2. Klicke "Neuen Key generieren"</p>
+    <p>3. Kopiere den Key</p>
+    <p>4. Setze ihn in deinem Clawdbot als ALARMBRIEFING_API_KEY</p>
+  </div>
+
+  <div class="card">
+    <h3>Kann ich die App ohne Bot nutzen?</h3>
+    <p>Ja! Du kannst Wecker manuell erstellen. Für Audio-Briefings brauchst du aber den Bot — er generiert die Inhalte (Wetter, News, Kalender).</p>
+  </div>
+
+  <div class="card">
+    <h3>Wie lösche ich meinen Account?</h3>
+    <p>Gehe in der App zu Einstellungen → Account löschen. Alle Daten werden sofort und unwiderruflich gelöscht. Alternativ per Email an support@alarmbriefing.app.</p>
+  </div>
+
+  <div class="card">
+    <h3>Meine Daten — was wird gespeichert?</h3>
+    <p>Nur das Nötigste: Email, Name, Alarm-Einstellungen. Kein Tracking, keine Werbung. Details in unserer <a href="/privacy.html">Datenschutzerklärung</a>.</p>
+  </div>
+
+  <h2>Kontakt</h2>
+  <p>Problem nicht gelöst? Schreib uns — wir antworten innerhalb von 24 Stunden.</p>
+  <a href="mailto:support@alarmbriefing.app" class="contact-btn">📧 support@alarmbriefing.app</a>
+</div>
+</body>
+</html>

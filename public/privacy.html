@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datenschutzerklärung — AlarmBriefing</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0;line-height:1.7;padding:24px}
+    .wrap{max-width:700px;margin:0 auto}
+    a{color:#60a5fa}
+    h1{font-size:24px;font-weight:700;margin-bottom:8px}
+    .updated{font-size:13px;color:#64748b;margin-bottom:32px}
+    h2{font-size:18px;font-weight:700;margin:28px 0 8px;color:#3b82f6}
+    h3{font-size:15px;font-weight:600;margin:16px 0 4px}
+    p,ul{font-size:14px;color:#94a3b8;margin-bottom:12px}
+    ul{padding-left:20px}li{margin-bottom:4px}
+    .back{display:inline-block;color:#3b82f6;font-size:14px;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse;margin:12px 0}
+    th,td{text-align:left;padding:8px 12px;border-bottom:1px solid #1e2a42;font-size:13px}
+    th{color:#64748b;font-weight:600}
+    td{color:#94a3b8}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="back">← Zurück zur Startseite</a>
+  <h1>Datenschutzerklärung</h1>
+  <p class="updated">Stand: Februar 2026</p>
+
+  <h2>1. Verantwortlicher</h2>
+  <p>Julius [Nachname]<br>[Adresse]<br>[PLZ Ort]<br>Deutschland<br>Email: <a href="mailto:support@alarmbriefing.app">support@alarmbriefing.app</a></p>
+  <p><em>(Hinweis: Bitte mit echten Daten ergänzen vor App Store Submission.)</em></p>
+
+  <h2>2. Welche Daten wir erheben</h2>
+  <table>
+    <tr><th>Datentyp</th><th>Zweck</th><th>Speicherdauer</th></tr>
+    <tr><td>Email-Adresse</td><td>Account-Erstellung, Login</td><td>Bis Account-Löschung</td></tr>
+    <tr><td>Name (optional)</td><td>Personalisierung</td><td>Bis Account-Löschung</td></tr>
+    <tr><td>Passwort (gehasht)</td><td>Authentifizierung</td><td>Bis Account-Löschung</td></tr>
+    <tr><td>Alarm-Einstellungen</td><td>App-Funktionalität</td><td>Bis Account-Löschung</td></tr>
+    <tr><td>API-Keys (gehasht)</td><td>Bot-Verbindung</td><td>Bis Widerruf/Löschung</td></tr>
+    <tr><td>Audit-Logs</td><td>Sicherheit, Transparenz</td><td>90 Tage</td></tr>
+  </table>
+
+  <h2>3. Rechtsgrundlage</h2>
+  <p>Die Verarbeitung erfolgt auf Grundlage von:</p>
+  <ul>
+    <li><b>Art. 6 Abs. 1 lit. b DSGVO</b> — Vertragserfüllung (App-Nutzung)</li>
+    <li><b>Art. 6 Abs. 1 lit. f DSGVO</b> — Berechtigtes Interesse (Sicherheit, Missbrauchsschutz)</li>
+    <li><b>Art. 6 Abs. 1 lit. a DSGVO</b> — Einwilligung (optionale Features)</li>
+  </ul>
+
+  <h2>4. Hosting & Drittanbieter</h2>
+  <h3>Vercel Inc.</h3>
+  <p>Hosting der App und API. Server in den USA und EU. Standardvertragsklauseln gemäß Art. 46 Abs. 2 lit. c DSGVO. <a href="https://vercel.com/legal/privacy-policy">Vercel Privacy Policy</a></p>
+
+  <h3>Supabase Inc.</h3>
+  <p>Datenbank und Authentifizierung. EU-Region verfügbar. <a href="https://supabase.com/privacy">Supabase Privacy Policy</a></p>
+
+  <h2>5. Bot-Zugriff (API)</h2>
+  <p>Nutzer können einen API-Key generieren, mit dem ein externer Bot (z.B. Clawdbot) auf ihre Daten zugreifen kann. Der Zugriff ist auf definierte Scopes beschränkt:</p>
+  <ul>
+    <li><b>alarms:read/write</b> — Wecker lesen und erstellen</li>
+    <li><b>briefings:write</b> — Briefings generieren</li>
+    <li><b>settings:read</b> — Einstellungen lesen</li>
+  </ul>
+  <p>Der Nutzer kann den API-Key jederzeit widerrufen. Bot-Aktionen werden im Audit-Log protokolliert.</p>
+
+  <h2>6. Deine Rechte</h2>
+  <p>Du hast folgende Rechte gemäß DSGVO:</p>
+  <ul>
+    <li><b>Auskunft</b> (Art. 15) — Welche Daten wir über dich haben</li>
+    <li><b>Berichtigung</b> (Art. 16) — Falsche Daten korrigieren</li>
+    <li><b>Löschung</b> (Art. 17) — Account und alle Daten löschen</li>
+    <li><b>Datenübertragbarkeit</b> (Art. 20) — Daten exportieren</li>
+    <li><b>Widerspruch</b> (Art. 21) — Verarbeitung widersprechen</li>
+    <li><b>Beschwerde</b> — Bei der zuständigen Datenschutzbehörde</li>
+  </ul>
+
+  <h2>7. Account-Löschung</h2>
+  <p>Du kannst deinen Account jederzeit in der App unter Einstellungen → "Account löschen" vollständig löschen. Dabei werden alle Daten unwiderruflich entfernt:</p>
+  <ul>
+    <li>Account-Daten (Email, Name, Passwort)</li>
+    <li>Alle Alarm-Einstellungen</li>
+    <li>Alle API-Keys</li>
+    <li>Alle Briefings</li>
+    <li>Audit-Logs</li>
+  </ul>
+  <p>Alternativ per Email an <a href="mailto:support@alarmbriefing.app">support@alarmbriefing.app</a>.</p>
+
+  <h2>8. Cookies & Tracking</h2>
+  <p>AlarmBriefing verwendet <b>keine Cookies</b> und <b>kein Tracking</b>. Wir nutzen localStorage im Browser ausschließlich für Session-Daten (Auth-Token). Es werden keine Analyse- oder Werbe-Tracker eingesetzt.</p>
+
+  <h2>9. Datensicherheit</h2>
+  <ul>
+    <li>Passwörter werden mit bcrypt (12 Runden) gehasht</li>
+    <li>API-Keys werden mit SHA-256 gehasht gespeichert</li>
+    <li>Alle Verbindungen laufen über HTTPS/TLS</li>
+    <li>JWT-Tokens mit 30-Tage Ablauf</li>
+  </ul>
+
+  <h2>10. Änderungen</h2>
+  <p>Wir behalten uns vor, diese Datenschutzerklärung anzupassen. Bei wesentlichen Änderungen informieren wir per Email oder In-App-Hinweis.</p>
+
+  <h2>11. Kontakt</h2>
+  <p>Bei Fragen zum Datenschutz: <a href="mailto:support@alarmbriefing.app">support@alarmbriefing.app</a></p>
+</div>
+</body>
+</html>
