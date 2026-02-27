@@ -81,7 +81,7 @@ export const DB = {
   // --- Users ---
   async createUser(user: User): Promise<User> {
     if (isSupabaseConfigured()) {
-      const { data, error } = await getSupabaseAdmin()!.from('users').insert(user).select().single();
+      const { data, error } = await getSupabaseAdmin()!.from('app_users').insert(user).select().single();
       if (error) throw new Error(error.message);
       return data;
     }
@@ -91,7 +91,7 @@ export const DB = {
 
   async getUserByEmail(email: string): Promise<User | null> {
     if (isSupabaseConfigured()) {
-      const { data } = await getSupabaseAdmin()!.from('users').select('*').eq('email', email).single();
+      const { data } = await getSupabaseAdmin()!.from('app_users').select('*').eq('email', email).single();
       return data;
     }
     for (const [, u] of mem.users) { if (u.email === email) return u; }
@@ -100,7 +100,7 @@ export const DB = {
 
   async getUserById(id: string): Promise<User | null> {
     if (isSupabaseConfigured()) {
-      const { data } = await getSupabaseAdmin()!.from('users').select('*').eq('id', id).single();
+      const { data } = await getSupabaseAdmin()!.from('app_users').select('*').eq('id', id).single();
       return data;
     }
     return mem.users.get(id) || null;
@@ -110,9 +110,9 @@ export const DB = {
     if (isSupabaseConfigured()) {
       await getSupabaseAdmin()!.from('briefings').delete().eq('user_id', id);
       await getSupabaseAdmin()!.from('audit_log').delete().eq('user_id', id);
-      await getSupabaseAdmin()!.from('bot_keys').delete().eq('user_id', id);
+      await getSupabaseAdmin()!.from('app_bot_keys').delete().eq('user_id', id);
       await getSupabaseAdmin()!.from('alarms').delete().eq('user_id', id);
-      await getSupabaseAdmin()!.from('users').delete().eq('id', id);
+      await getSupabaseAdmin()!.from('app_users').delete().eq('id', id);
       return;
     }
     mem.users.delete(id);
@@ -178,8 +178,8 @@ export const DB = {
   async createBotKey(key: BotKey): Promise<void> {
     if (isSupabaseConfigured()) {
       // Remove old keys for user
-      await getSupabaseAdmin()!.from('bot_keys').delete().eq('user_id', key.user_id);
-      await getSupabaseAdmin()!.from('bot_keys').insert(key);
+      await getSupabaseAdmin()!.from('app_bot_keys').delete().eq('user_id', key.user_id);
+      await getSupabaseAdmin()!.from('app_bot_keys').insert(key);
       return;
     }
     for (const [h, b] of mem.botKeys) { if (b.user_id === key.user_id) mem.botKeys.delete(h); }
@@ -188,7 +188,7 @@ export const DB = {
 
   async getBotByHash(hash: string): Promise<BotKey | null> {
     if (isSupabaseConfigured()) {
-      const { data } = await getSupabaseAdmin()!.from('bot_keys').select('*').eq('hash', hash).single();
+      const { data } = await getSupabaseAdmin()!.from('app_bot_keys').select('*').eq('hash', hash).single();
       return data;
     }
     return mem.botKeys.get(hash) || null;
@@ -196,7 +196,7 @@ export const DB = {
 
   async deleteBotKeys(userId: string): Promise<void> {
     if (isSupabaseConfigured()) {
-      await getSupabaseAdmin()!.from('bot_keys').delete().eq('user_id', userId);
+      await getSupabaseAdmin()!.from('app_bot_keys').delete().eq('user_id', userId);
       return;
     }
     for (const [h, b] of mem.botKeys) { if (b.user_id === userId) mem.botKeys.delete(h); }
