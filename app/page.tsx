@@ -1,7 +1,7 @@
-import { redirect } from 'next/navigation';
+'use client';
+import { useEffect } from 'react';
 
-// Landing page is at /index.html (static)
-// This catches the Next.js route and redirects
 export default function Home() {
-  redirect('/index.html');
+  useEffect(() => { window.location.replace('/index.html'); }, []);
+  return null;
 }

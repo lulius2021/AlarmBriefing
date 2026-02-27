@@ -1,114 +1,153 @@
 import { Router } from 'express';
-import { v4 as uuid } from 'uuid';
+import { supabase } from '../lib/supabase.js';
 
 export const botRouter = Router();
 
-// Bot: List alarms
-botRouter.get('/alarms', (req, res) => {
+// ─── Bot: List all user alarms ───
+botRouter.get('/alarms', async (req, res) => {
   if (!req.botScopes.includes('alarms:read'))
     return res.status(403).json({ error: 'Scope alarms:read required' });
-  const alarms = global.alarms.get(req.userId) || [];
-  res.json({ alarms });
+
+  const { data } = await supabase
+    .from('alarms')
+    .select('*')
+    .eq('user_id', req.userId)
+    .order('time');
+
+  res.json({ alarms: data || [] });
 });
 
-// Bot: Create alarm
-botRouter.post('/alarms', (req, res) => {
+// ─── Bot: Create alarm ───
+botRouter.post('/alarms', async (req, res) => {
   if (!req.botScopes.includes('alarms:write'))
     return res.status(403).json({ error: 'Scope alarms:write required' });
 
-  // Rate limit: max 20 alarms
-  const alarms = global.alarms.get(req.userId) || [];
-  if (alarms.length >= 20) return res.status(429).json({ error: 'Alarm limit reached (20)' });
+  const { count } = await supabase
+    .from('alarms')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', req.userId);
 
-  const alarm = {
-    id: uuid(),
+  if (count >= 20) return res.status(429).json({ error: 'Max 20 alarms' });
+
+  const { data, error } = await supabase.from('alarms').insert({
+    user_id: req.userId,
     name: req.body.name || 'Bot-Alarm',
     active: req.body.active ?? true,
     time: req.body.time || '07:00:00',
     days: req.body.days || [],
-    snoozeEnabled: req.body.snoozeEnabled ?? true,
-    snoozeDuration: req.body.snoozeDuration || 5,
+    snooze_enabled: req.body.snooze_enabled ?? true,
+    snooze_duration: req.body.snooze_duration || 5,
     sound: req.body.sound || 'default',
     vibration: req.body.vibration ?? true,
-    briefingMode: req.body.briefingMode || 'standard',
-    managedBy: 'bot',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+    briefing_mode: req.body.briefing_mode || 'standard',
+    managed_by: 'bot',
+    bot_pairing_id: req.botPairingId,
+  }).select().single();
 
-  alarms.push(alarm);
-  global.alarms.set(req.userId, alarms);
-  res.status(201).json({ alarm });
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json({ alarm: data });
 });
 
-// Bot: Update alarm
-botRouter.patch('/alarms/:id', (req, res) => {
+// ─── Bot: Update alarm (bot-managed only) ───
+botRouter.patch('/alarms/:id', async (req, res) => {
   if (!req.botScopes.includes('alarms:write'))
     return res.status(403).json({ error: 'Scope alarms:write required' });
 
-  const alarms = global.alarms.get(req.userId) || [];
-  const idx = alarms.findIndex(a => a.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  // Verify it's a bot-managed alarm
+  const { data: existing } = await supabase
+    .from('alarms')
+    .select('managed_by')
+    .eq('id', req.params.id)
+    .eq('user_id', req.userId)
+    .single();
 
-  // Bot can only modify bot-managed alarms
-  if (alarms[idx].managedBy !== 'bot')
-    return res.status(403).json({ error: 'Cannot modify manual alarm' });
+  if (!existing) return res.status(404).json({ error: 'Alarm not found' });
+  if (existing.managed_by !== 'bot')
+    return res.status(403).json({ error: 'Cannot modify user-created alarm' });
 
-  alarms[idx] = { ...alarms[idx], ...req.body, managedBy: 'bot', updatedAt: new Date().toISOString() };
-  global.alarms.set(req.userId, alarms);
-  res.json({ alarm: alarms[idx] });
+  const allowed = ['name', 'active', 'time', 'days', 'snooze_enabled', 'snooze_duration',
+    'sound', 'vibration', 'briefing_mode'];
+  const updates = {};
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
+
+  const { data, error } = await supabase
+    .from('alarms')
+    .update(updates)
+    .eq('id', req.params.id)
+    .eq('user_id', req.userId)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ alarm: data });
 });
 
-// Bot: Delete alarm
-botRouter.delete('/alarms/:id', (req, res) => {
+// ─── Bot: Delete alarm (bot-managed only) ───
+botRouter.delete('/alarms/:id', async (req, res) => {
   if (!req.botScopes.includes('alarms:write'))
     return res.status(403).json({ error: 'Scope alarms:write required' });
 
-  let alarms = global.alarms.get(req.userId) || [];
-  const alarm = alarms.find(a => a.id === req.params.id);
-  if (!alarm) return res.status(404).json({ error: 'Not found' });
-  if (alarm.managedBy !== 'bot')
-    return res.status(403).json({ error: 'Cannot delete manual alarm' });
+  const { data: existing } = await supabase
+    .from('alarms')
+    .select('managed_by')
+    .eq('id', req.params.id)
+    .eq('user_id', req.userId)
+    .single();
 
-  alarms = alarms.filter(a => a.id !== req.params.id);
-  global.alarms.set(req.userId, alarms);
+  if (!existing) return res.status(404).json({ error: 'Alarm not found' });
+  if (existing.managed_by !== 'bot')
+    return res.status(403).json({ error: 'Cannot delete user-created alarm' });
+
+  await supabase.from('alarms').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });
 
-// Bot: Trigger briefing generation
-botRouter.post('/briefings/generate', (req, res) => {
+// ─── Bot: Push briefing ───
+botRouter.post('/briefings', async (req, res) => {
   if (!req.botScopes.includes('briefings:write'))
     return res.status(403).json({ error: 'Scope briefings:write required' });
 
-  const { alarmId, modules, content } = req.body;
-  const briefing = {
-    id: uuid(),
-    alarmId,
-    userId: req.userId,
+  const { alarm_id, modules, content_text, content_ssml, audio_url, weather_data, news_data } = req.body;
+  if (!alarm_id) return res.status(400).json({ error: 'alarm_id required' });
+
+  const { data, error } = await supabase.from('briefings').insert({
+    alarm_id,
+    user_id: req.userId,
     modules: modules || ['weather', 'news'],
-    content: content || '',
-    generatedAt: new Date().toISOString(),
+    content_text,
+    content_ssml,
+    audio_url,
+    weather_data,
+    news_data,
     cached: true,
-  };
+  }).select().single();
 
-  const userBriefings = global.briefings.get(req.userId) || [];
-  userBriefings.push(briefing);
-  // Keep last 50
-  if (userBriefings.length > 50) userBriefings.shift();
-  global.briefings.set(req.userId, userBriefings);
-
-  res.json({ briefing });
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json({ briefing: data });
 });
 
-// Bot: Read settings
-botRouter.get('/settings', (req, res) => {
+// ─── Bot: Read user settings ───
+botRouter.get('/settings', async (req, res) => {
   if (!req.botScopes.includes('settings:read'))
     return res.status(403).json({ error: 'Scope settings:read required' });
-  const user = global.users.get(req.userId);
-  res.json({ settings: user?.settings || {} });
+
+  const { data } = await supabase
+    .from('user_settings')
+    .select('*')
+    .eq('user_id', req.userId)
+    .single();
+
+  res.json({ settings: data || {} });
 });
 
-// Bot: Ping
+// ─── Bot: Ping / health ───
 botRouter.get('/ping', (req, res) => {
-  res.json({ ok: true, userId: req.userId, scopes: req.botScopes, timestamp: new Date().toISOString() });
+  res.json({
+    ok: true,
+    user_id: req.userId,
+    scopes: req.botScopes,
+    timestamp: new Date().toISOString(),
+  });
 });
