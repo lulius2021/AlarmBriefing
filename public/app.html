@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AlarmBriefing</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔔</text></svg>">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#0a0e1a;--bg-card:#111827;--bg-card-hover:#1a2235;--bg-input:#0d1220;--border:#1e2a42;--blue:#3b82f6;--blue-light:#60a5fa;--blue-dark:#1d4ed8;--blue-glow:rgba(59,130,246,0.4);--blue-muted:rgba(59,130,246,0.12);--text:#e2e8f0;--text-dim:#64748b;--text-muted:#475569;--success:#22c55e;--warning:#f59e0b;--danger:#ef4444}
+    html,body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);height:100%;overflow:hidden}
+    body{display:flex;align-items:center;justify-content:center}
+    body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 30% 20%,rgba(59,130,246,0.06) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(59,130,246,0.04) 0%,transparent 50%);pointer-events:none;z-index:0}
+    .phone{width:390px;height:100%;max-height:844px;position:relative;z-index:1;display:flex;flex-direction:column;overflow:hidden}
+    @media(min-width:500px){.phone{height:90vh;border-radius:40px;border:2px solid var(--border);box-shadow:0 20px 80px rgba(0,0,0,0.5)}}
+    @media(max-width:500px){.phone{width:100%;max-height:100%}}
+
+    .screen{display:none;flex-direction:column;flex:1;overflow:hidden}
+    .screen.active{display:flex}
+
+    /* Auth Screen */
+    .auth{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center}
+    .auth-icon{font-size:48px;margin-bottom:12px}
+    .auth-title{font-size:22px;font-weight:700;margin-bottom:4px}
+    .auth-title span{color:var(--blue)}
+    .auth-desc{font-size:13px;color:var(--text-dim);margin-bottom:20px;max-width:280px;line-height:1.5}
+    .auth-form{width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px}
+    .auth-error{font-size:12px;color:var(--danger);min-height:16px;text-align:center}
+    .auth-switch{font-size:13px;color:var(--text-dim);margin-top:12px;cursor:pointer}
+    .auth-switch span{color:var(--blue);font-weight:600}
+
+    /* Onboarding */
+    .ob{flex:1;display:flex;flex-direction:column;padding:24px;justify-content:space-between}
+    .ob-progress{display:flex;justify-content:center;gap:8px;margin-bottom:16px}
+    .ob-dot{width:8px;height:8px;border-radius:4px;background:var(--border);transition:all .3s}
+    .ob-dot.active{background:var(--blue);width:24px;box-shadow:0 0 10px var(--blue-glow)}
+    .ob-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    .ob-icon{font-size:48px;margin-bottom:12px}
+    .ob-title{font-size:22px;font-weight:700;margin-bottom:6px;line-height:1.3}
+    .ob-title span{color:var(--blue)}
+    .ob-desc{font-size:13px;color:var(--text-dim);line-height:1.5;max-width:300px;margin-bottom:14px}
+    .ob-box{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:left;width:100%;max-width:320px;margin-bottom:10px}
+    .ob-box-title{font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+    .ob-box p{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:2px}
+    .ob-key{background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue-light);word-break:break-all;width:100%;max-width:320px;text-align:center;cursor:pointer;user-select:all;margin-bottom:6px}
+    .ob-key-hint{font-size:11px;color:var(--text-muted)}
+    .ob-footer{display:flex;gap:10px;padding-top:10px}
+
+    /* Buttons */
+    .btn{padding:12px 24px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:14px;cursor:pointer;font-size:14px;font-family:'Inter',sans-serif;font-weight:600;transition:all .2s}
+    .btn:hover{border-color:rgba(59,130,246,0.3)}.btn:active{transform:scale(0.97)}
+    .btn-blue{background:linear-gradient(135deg,var(--blue),var(--blue-dark));border-color:var(--blue);color:white;box-shadow:0 0 20px var(--blue-glow)}
+    .btn-sm{padding:8px 16px;font-size:12px;border-radius:10px}
+    .btn-full{width:100%}.btn-flex{flex:1}
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+
+    .input{width:100%;padding:11px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .3s}
+    .input:focus{border-color:var(--blue)}
+
+    /* Home */
+    .home-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 6px;flex-shrink:0}
+    .home-title{font-size:20px;font-weight:800}.home-title span{color:var(--blue)}
+    .home-sub{font-size:11px;color:var(--text-dim);margin-top:1px}
+    .home-user{font-size:10px;color:var(--text-muted)}
+    .icon-btn{width:38px;height:38px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .2s}
+    .icon-btn:hover{border-color:rgba(59,130,246,0.3)}
+
+    .next-alarm{margin:8px 20px;padding:12px 14px;background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(59,130,246,0.05));border:1px solid rgba(59,130,246,0.2);border-radius:14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .na-icon{font-size:24px}.na-time{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--blue-light)}
+    .na-label{font-size:11px;color:var(--text-dim)}.na-brief{font-size:10px;color:var(--blue);margin-top:1px}
+
+    .briefing-player{margin:6px 20px;padding:10px 14px;background:var(--bg-card);border:1px solid rgba(59,130,246,0.2);border-radius:12px;display:none;flex-shrink:0;align-items:center;gap:10px}
+    .briefing-player.active{display:flex}
+    .bp-play{width:34px;height:34px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:white;flex-shrink:0}
+    .bp-info{flex:1}.bp-title{font-size:12px;font-weight:600}.bp-sub{font-size:10px;color:var(--text-dim)}
+    .bp-wave{display:flex;align-items:center;gap:2px;height:18px}
+    .bp-bar{width:3px;border-radius:2px;background:var(--blue);animation:wave 1s ease-in-out infinite}
+    .bp-bar:nth-child(1){height:7px;animation-delay:0s}.bp-bar:nth-child(2){height:14px;animation-delay:.15s}.bp-bar:nth-child(3){height:9px;animation-delay:.3s}.bp-bar:nth-child(4){height:18px;animation-delay:.45s}.bp-bar:nth-child(5){height:11px;animation-delay:.6s}
+    @keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.4)}}
+
+    .alarm-list{flex:1;overflow-y:auto;padding:6px 20px 60px}
+    .alarm-card{display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+    .alarm-card:hover{border-color:rgba(59,130,246,0.25);background:var(--bg-card-hover)}
+    .alarm-card.inactive{opacity:0.4}
+    .alarm-time{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;line-height:1}
+    .alarm-meta{font-size:11px;color:var(--text-dim);margin-top:2px}
+    .alarm-days{display:flex;gap:3px;margin-top:3px}
+    .day-tag{font-size:8px;font-weight:600;color:var(--blue-light);background:var(--blue-muted);padding:2px 5px;border-radius:4px}
+    .bot-tag{font-size:8px;font-weight:700;letter-spacing:1px;color:var(--blue);background:var(--blue-muted);border:1px solid rgba(59,130,246,0.2);padding:1px 6px;border-radius:4px}
+    .toggle{width:42px;height:22px;border-radius:11px;background:var(--border);cursor:pointer;position:relative;transition:background .3s;flex-shrink:0}
+    .toggle.on{background:var(--blue-muted)}
+    .toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--text-dim);transition:all .3s}
+    .toggle.on::after{left:23px;background:var(--blue);box-shadow:0 0 8px var(--blue-glow)}
+    .fab{position:absolute;bottom:16px;right:16px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-dark));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 20px var(--blue-glow);font-size:24px;color:white;z-index:10;transition:all .2s}
+    .fab:hover{transform:scale(1.1)}
+    .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--text-dim);padding:20px}
+    .empty-state .icon{font-size:40px;margin-bottom:10px;opacity:0.5}
+
+    /* Settings */
+    .settings-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .back-link{color:var(--blue);cursor:pointer;font-size:13px;font-weight:500}
+    .settings-body{flex:1;overflow-y:auto;padding:0 20px 20px}
+    .s-title{font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;margin:14px 0 6px}
+    .s-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .s-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px}
+    .s-row:last-child{border-bottom:none}
+    .s-dim{color:var(--text-dim);font-size:12px}
+    .s-explain{padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-dim);line-height:1.5;background:rgba(59,130,246,0.03)}
+    .api-key-box{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue-light);background:var(--bg-input);padding:10px 14px;word-break:break-all;user-select:all;cursor:pointer;border-bottom:1px solid var(--border)}
+    .conn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .conn-dot.on{background:var(--success);box-shadow:0 0 6px rgba(34,197,94,0.5)}
+    .conn-dot.off{background:var(--danger)}
+    .s-row.danger{color:var(--danger)}
+
+    /* Modal */
+    .modal-bg{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:50;align-items:flex-end}
+    .modal-bg.active{display:flex}
+    .modal{width:100%;max-height:80%;background:var(--bg);border-top-left-radius:20px;border-top-right-radius:20px;border:1px solid var(--border);border-bottom:none;overflow-y:auto;animation:slideUp .3s ease-out}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .modal-bar{width:32px;height:4px;background:var(--border);border-radius:2px;margin:8px auto}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:4px 20px 12px}
+    .modal-title{font-size:16px;font-weight:700}
+    .modal-close{color:var(--blue);cursor:pointer;font-size:13px;font-weight:600}
+    .modal-body{padding:0 20px 20px}
+    .time-input{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px}
+    .time-field{font-family:'JetBrains Mono',monospace;font-size:44px;font-weight:700;width:82px;text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:6px;color:var(--text);outline:none}
+    .time-field:focus{border-color:var(--blue)}
+    .time-colon{font-family:'JetBrains Mono',monospace;font-size:36px;color:var(--blue)}
+    .field{margin-bottom:12px}.field-label{font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+    .days-row{display:flex;gap:4px}
+    .day-btn{flex:1;text-align:center;padding:8px 0;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+    .day-btn.active{background:var(--blue-muted);border-color:var(--blue);color:var(--blue)}
+    .radio-group{display:flex;flex-direction:column;gap:5px}
+    .radio-opt{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;font-size:12px}
+    .radio-opt.active{border-color:var(--blue);background:var(--blue-muted)}
+    .rdot{width:16px;height:16px;border-radius:50%;border:2px solid var(--text-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .radio-opt.active .rdot{border-color:var(--blue)}
+    .rdot-in{width:7px;height:7px;border-radius:50%;background:var(--blue);display:none}
+    .radio-opt.active .rdot-in{display:block}
+
+    .loading{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;font-size:12px;color:var(--text-dim)}
+    .spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div class="phone" id="app">
+
+  <!-- AUTH -->
+  <div class="screen active" id="s-auth">
+    <div class="auth">
+      <div class="auth-icon">🔔</div>
+      <div class="auth-title">Alarm<span>Briefing</span></div>
+      <div class="auth-desc">Melde dich an um deine Wecker und Briefings geraetuebergreifend zu synchronisieren.</div>
+      <div class="auth-form" id="auth-form">
+        <input class="input" id="auth-name" placeholder="Name (optional)">
+        <input class="input" id="auth-email" type="email" placeholder="Email" autocomplete="email">
+        <input class="input" id="auth-pass" type="password" placeholder="Passwort (min. 8 Zeichen)" autocomplete="current-password">
+        <div class="auth-error" id="auth-error"></div>
+        <button class="btn btn-blue btn-full" id="auth-btn" onclick="doAuth()">Registrieren</button>
+      </div>
+      <div class="auth-switch" id="auth-switch" onclick="toggleAuthMode()">
+        Schon registriert? <span>Anmelden</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ONBOARDING -->
+  <div class="screen" id="s-onboarding">
+    <div class="ob">
+      <div class="ob-progress"><div class="ob-dot active" data-s="0"></div><div class="ob-dot" data-s="1"></div></div>
+      <div class="ob-body" id="ob-body"></div>
+      <div class="ob-footer" id="ob-footer"></div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen" id="s-home">
+    <div class="home-header">
+      <div>
+        <div class="home-title">Alarm<span>Briefing</span></div>
+        <div class="home-sub" id="home-sub"></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <div class="icon-btn" onclick="showScreen('settings')">⚙</div>
+        <div class="icon-btn" onclick="logout()">🚪</div>
+      </div>
+    </div>
+    <div class="next-alarm" id="next-alarm" style="display:none">
+      <div class="na-icon">⏰</div>
+      <div><div class="na-time" id="na-time"></div><div class="na-label" id="na-label"></div><div class="na-brief" id="na-brief"></div></div>
+    </div>
+    <div class="briefing-player" id="bp"><div class="bp-play" onclick="togglePlay()">▶</div><div class="bp-info"><div class="bp-title">Morgenbriefing</div><div class="bp-sub">Wetter, Termine, News</div></div><div class="bp-wave" id="bp-wave" style="display:none"><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div></div></div>
+    <div class="alarm-list" id="alarm-list"></div>
+    <div class="fab" onclick="openModal()">+</div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="s-settings">
+    <div class="settings-header">
+      <span class="back-link" onclick="showScreen('home')">← Zurück</span>
+      <span style="font-weight:600;font-size:15px">Einstellungen</span>
+      <span style="width:50px"></span>
+    </div>
+    <div class="settings-body">
+      <div class="s-title">Bot-Verbindung</div>
+      <div class="s-card">
+        <div class="s-explain">
+          <b>So verbindest du deinen Bot:</b><br>
+          1. Klicke "Neuen Key generieren"<br>
+          2. Kopiere den API-Key<br>
+          3. Setze ihn in deinem Clawdbot als <b>ALARMBRIEFING_API_KEY</b><br>
+          4. Der Bot kann dann Wecker erstellen, Briefings generieren und ueber deine Lautsprecher abspielen.
+        </div>
+        <div class="s-row"><div style="display:flex;align-items:center;gap:6px"><div class="conn-dot off" id="conn-dot"></div><span id="conn-label" style="font-size:12px">Kein Bot verbunden</span></div></div>
+        <div class="api-key-box" id="api-key-box" onclick="copyKey()" style="display:none"></div>
+        <div style="padding:8px 14px 10px;display:flex;gap:6px">
+          <button class="btn btn-sm btn-blue btn-flex" onclick="genBotKey()">🔑 Neuen Key generieren</button>
+          <button class="btn btn-sm btn-flex" id="copy-btn" onclick="copyKey()" style="display:none">📋 Kopieren</button>
+        </div>
+      </div>
+
+      <div class="s-title">Briefing-Quellen</div>
+      <div class="s-card">
+        <div class="s-explain">Dein Bot sammelt diese Daten und erstellt daraus ein Audio-Briefing das beim Alarm abgespielt wird — wie Jarvis.</div>
+        <div class="s-row"><span>🌤 Wetter</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="s-row"><span>📅 Kalender</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="s-row"><span>📰 Nachrichten</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="s-row"><span>✅ Aufgaben</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+
+      <div class="s-title">Audio</div>
+      <div class="s-card">
+        <div class="s-explain">Stimme und Tempo fuer dein Audio-Briefing ueber die Lautsprecher.</div>
+        <div class="s-row"><span>Stimme</span><span class="s-dim">Jarvis</span></div>
+        <div class="s-row"><span>Tempo</span><span class="s-dim">1.0x</span></div>
+      </div>
+
+      <div class="s-title">Account</div>
+      <div class="s-card">
+        <div class="s-row"><span>Email</span><span class="s-dim" id="s-email">-</span></div>
+        <div class="s-row danger" style="cursor:pointer" onclick="logout()"><span>Abmelden</span><span>→</span></div>
+      </div>
+
+      <div class="s-title">Bot-Aktivitäten</div>
+      <div class="s-card" id="audit-log"><div class="s-row"><span class="s-dim">Noch keine Aktivitaeten</span></div></div>
+    </div>
+  </div>
+
+  <!-- ALARM MODAL -->
+  <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-bar"></div>
+      <div class="modal-head"><span class="modal-title">Neuer Wecker</span><span class="modal-close" onclick="closeModal()">Fertig</span></div>
+      <div class="modal-body">
+        <div class="time-input"><input class="time-field" id="m-h" value="07" maxlength="2"><span class="time-colon">:</span><input class="time-field" id="m-m" value="00" maxlength="2"></div>
+        <div class="field"><div class="field-label">Name</div><input class="input" id="m-name" placeholder="z.B. Morgenwecker"></div>
+        <div class="field"><div class="field-label">Wochentage</div><div class="days-row" id="m-days"></div></div>
+        <div class="field"><div class="field-label">Briefing</div><div class="radio-group" id="m-brief"></div></div>
+        <button class="btn btn-blue btn-full" onclick="saveAlarm()">Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+let token = localStorage.getItem('ab_token');
+let user = JSON.parse(localStorage.getItem('ab_user')||'null');
+let onboarded = localStorage.getItem('ab_onboarded');
+let alarms = [];
+let currentBotKey = null;
+let authMode = 'register';
+let editDays = [1,2,3,4,5], editBrief = 'standard';
+
+// === API ===
+async function api(path, opts={}) {
+  const headers = {'Content-Type':'application/json'};
+  if (token) headers['Authorization'] = 'Bearer '+token;
+  const r = await fetch(API+path, {...opts, headers:{...headers,...(opts.headers||{})}});
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error||'Fehler');
+  return data;
+}
+
+// === AUTH ===
+function toggleAuthMode() {
+  authMode = authMode==='register'?'login':'register';
+  document.getElementById('auth-btn').textContent = authMode==='register'?'Registrieren':'Anmelden';
+  document.getElementById('auth-switch').innerHTML = authMode==='register'
+    ?'Schon registriert? <span>Anmelden</span>'
+    :'Noch kein Account? <span>Registrieren</span>';
+  document.getElementById('auth-name').style.display = authMode==='register'?'':'none';
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function doAuth() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-pass').value;
+  const name = document.getElementById('auth-name').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+  try {
+    const data = authMode==='register'
+      ? await api('/api/auth/register',{method:'POST',body:JSON.stringify({email,password,name})})
+      : await api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})});
+    token = data.token;
+    user = data.user;
+    localStorage.setItem('ab_token', token);
+    localStorage.setItem('ab_user', JSON.stringify(user));
+    if (!onboarded) { showScreen('onboarding'); renderOb(); }
+    else { showScreen('home'); loadAlarms(); }
+  } catch(e) { errEl.textContent = e.message; }
+}
+
+function logout() {
+  token = null; user = null;
+  localStorage.removeItem('ab_token');
+  localStorage.removeItem('ab_user');
+  localStorage.removeItem('ab_onboarded');
+  showScreen('auth');
+}
+
+// === ONBOARDING ===
+let obStep = 0;
+const obSteps = [
+  { icon:'🤖', title:'Bot verbinden', desc:'Dein Clawdbot steuert AlarmBriefing. Er erstellt Wecker und generiert Audio-Briefings die beim Alarm ueber deine Lautsprecher abgespielt werden.',
+    extra:()=>`<div class="ob-box"><div class="ob-box-title">So funktioniert's</div><p>1. Gehe in die Einstellungen</p><p>2. Generiere einen API-Key</p><p>3. Gib den Key deinem Clawdbot</p><p>4. Der Bot erstellt Alarme + Briefings fuer dich</p></div>`,
+    btns:[{text:'Weiter',blue:true,fn:'obNext()'}]},
+  { icon:'✅', title:'Bereit!', desc:'Dein Wecker mit Jarvis-Briefings. Starte jetzt und werde morgens wie Tony Stark geweckt.',
+    extra:()=>`<div class="ob-box"><div class="ob-box-title">Was dein Bot kann</div><p>⏰ Wecker erstellen und verwalten</p><p>🎙 Audio-Briefings generieren (TTS)</p><p>🌤 Wetter, Kalender, News einbinden</p><p>🔊 Abspielen ueber deine Lautsprecher</p></div>`,
+    btns:[{text:'Zurück',blue:false,fn:'obBack()'},{text:'App starten',blue:true,fn:'finishOb()'}]}
+];
+
+function renderOb() {
+  const s = obSteps[obStep];
+  document.getElementById('ob-body').innerHTML = `<div class="ob-icon">${s.icon}</div><div class="ob-title">${s.title}</div><div class="ob-desc">${s.desc}</div>${typeof s.extra==='function'?s.extra():''}`;
+  document.getElementById('ob-footer').innerHTML = s.btns.map(b=>`<button class="btn btn-flex ${b.blue?'btn-blue':''}" onclick="${b.fn}">${b.text}</button>`).join('');
+  document.querySelectorAll('.ob-dot').forEach((d,i)=>d.className='ob-dot'+(i<=obStep?' active':''));
+}
+function obNext(){if(obStep<obSteps.length-1){obStep++;renderOb()}}
+function obBack(){if(obStep>0){obStep--;renderOb()}}
+function finishOb(){localStorage.setItem('ab_onboarded','1');onboarded='1';showScreen('home');loadAlarms()}
+
+// === SCREENS ===
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  if (id==='home') renderHome();
+  if (id==='settings') renderSettings();
+}
+
+// === HOME ===
+async function loadAlarms() {
+  try { const d = await api('/api/alarms'); alarms = d.alarms||[]; renderHome(); }
+  catch(e) { console.error(e); renderHome(); }
+}
+
+function renderHome() {
+  const sorted = [...alarms].sort((a,b)=>a.active===b.active?a.time.localeCompare(b.time):a.active?-1:1);
+  const active = alarms.filter(a=>a.active);
+  document.getElementById('home-sub').textContent = `${active.length} Alarm${active.length!==1?'e':''} aktiv`;
+
+  const next = sorted.find(a=>a.active);
+  if (next) {
+    document.getElementById('na-time').textContent=next.time;
+    document.getElementById('na-label').textContent=next.name;
+    const bl=next.briefingMode==='none'?'Nur Alarm':next.briefingMode==='short'?'Kurzbriefing':'Wetter, News, Kalender';
+    document.getElementById('na-brief').textContent=next.briefingMode!=='none'?'🎙 '+bl:'🔕 Kein Briefing';
+    document.getElementById('next-alarm').style.display='flex';
+  } else { document.getElementById('next-alarm').style.display='none'; }
+
+  const bp=document.getElementById('bp');
+  if(active.some(a=>a.briefingMode!=='none'))bp.classList.add('active');else bp.classList.remove('active');
+
+  const list=document.getElementById('alarm-list');
+  if(sorted.length===0){
+    list.innerHTML='<div class="empty-state"><div class="icon">⏰</div><div>Noch keine Wecker.<br>Tippe + oder lass deinen Bot einen erstellen.</div></div>';
+    return;
+  }
+  list.innerHTML=sorted.map(a=>{
+    const dh=a.days&&a.days.length?a.days.map(d=>`<span class="day-tag">${DAYS[d]}</span>`).join(''):'<span class="day-tag">Einmalig</span>';
+    const bl=a.briefingMode==='none'?'Nur Alarm':a.briefingMode==='short'?'Kurz':'Standard';
+    return`<div class="alarm-card ${a.active?'':'inactive'}"><div><div class="alarm-time">${a.time}</div><div class="alarm-meta">${a.name} · ${bl} ${a.managedBy==='bot'?'<span class="bot-tag">BOT</span>':''}</div><div class="alarm-days">${dh}</div></div><div class="toggle ${a.active?'on':''}" onclick="event.stopPropagation();toggleAlarm('${a.id}')"></div></div>`;
+  }).join('');
+}
+
+async function toggleAlarm(id) {
+  const a=alarms.find(x=>x.id===id);if(!a)return;
+  a.active=!a.active;renderHome();
+  // TODO: PATCH to API
+}
+
+function togglePlay(){
+  const w=document.getElementById('bp-wave'),p=document.querySelector('.bp-play');
+  if(w.style.display==='none'){w.style.display='flex';p.textContent='⏸'}
+  else{w.style.display='none';p.textContent='▶'}
+}
+
+// === SETTINGS ===
+function renderSettings() {
+  document.getElementById('s-email').textContent=user?.email||'-';
+  if(currentBotKey){
+    document.getElementById('api-key-box').textContent=currentBotKey;
+    document.getElementById('api-key-box').style.display='';
+    document.getElementById('copy-btn').style.display='';
+    document.getElementById('conn-dot').className='conn-dot on';
+    document.getElementById('conn-label').textContent='Key generiert';
+  }
+}
+
+async function genBotKey() {
+  try {
+    const d = await api('/api/auth/bot-key',{method:'POST'});
+    currentBotKey = d.key;
+    document.getElementById('api-key-box').textContent=d.key;
+    document.getElementById('api-key-box').style.display='';
+    document.getElementById('copy-btn').style.display='';
+    document.getElementById('conn-dot').className='conn-dot on';
+    document.getElementById('conn-label').textContent='Key generiert — kopieren und dem Bot geben';
+  } catch(e) { alert(e.message); }
+}
+
+function copyKey() {
+  if(!currentBotKey)return;
+  navigator.clipboard.writeText(currentBotKey).then(()=>{
+    const el=document.getElementById('api-key-box');
+    const o=el.textContent;el.textContent='✓ Kopiert!';setTimeout(()=>el.textContent=o,1500);
+  });
+}
+
+// === MODAL ===
+function openModal(){
+  editDays=[1,2,3,4,5];editBrief='standard';
+  document.getElementById('m-h').value='07';document.getElementById('m-m').value='00';document.getElementById('m-name').value='';
+  renderDays();renderBrief();
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal(){document.getElementById('modal').classList.remove('active')}
+function renderDays(){document.getElementById('m-days').innerHTML=DAYS.map((l,i)=>`<div class="day-btn ${editDays.includes(i)?'active':''}" onclick="editDays.includes(${i})?editDays=editDays.filter(x=>x!==${i}):editDays.push(${i});renderDays()">${l}</div>`).join('')}
+function renderBrief(){
+  const o=[['none','Nur Alarm'],['short','Kurzbriefing (10-30s)'],['standard','Vollbriefing (1-3 Min.)']];
+  document.getElementById('m-brief').innerHTML=o.map(([k,l])=>`<div class="radio-opt ${editBrief===k?'active':''}" onclick="editBrief='${k}';renderBrief()"><div class="rdot"><div class="rdot-in"></div></div><span>${l}</span></div>`).join('');
+}
+async function saveAlarm(){
+  const h=document.getElementById('m-h').value.padStart(2,'0');
+  const m=document.getElementById('m-m').value.padStart(2,'0');
+  const name=document.getElementById('m-name').value||'Alarm';
+  try{
+    await api('/api/alarms',{method:'POST',body:JSON.stringify({name,time:`${h}:${m}`,days:editDays,briefingMode:editBrief})});
+    closeModal();loadAlarms();
+  }catch(e){alert(e.message)}
+}
+
+// === INIT ===
+if(token && user){
+  if(onboarded){showScreen('home');loadAlarms();}
+  else{showScreen('onboarding');renderOb();}
+}
+</script>
+</body>
+</html>
