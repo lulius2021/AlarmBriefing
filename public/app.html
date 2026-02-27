@@ -260,6 +260,23 @@
     </div>
   </div>
 
+  <!-- ALARM OVERLAY (when alarm triggers) -->
+  <div class="modal-bg" id="alarm-overlay" style="align-items:center;justify-content:center">
+    <div style="text-align:center;padding:30px">
+      <div style="font-size:64px;margin-bottom:16px;animation:float 2s ease-in-out infinite">⏰</div>
+      <div id="alarm-overlay-time" style="font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:700;color:var(--blue-light)">07:00</div>
+      <div id="alarm-overlay-name" style="font-size:16px;color:var(--text-dim);margin:8px 0 24px">Morgenwecker</div>
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button class="btn" onclick="snoozAlarm()" style="min-width:120px">😴 Snooze</button>
+        <button class="btn btn-blue" onclick="dismissAlarm()" style="min-width:120px">✅ Aufstehen</button>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:var(--text-muted)" id="alarm-overlay-status">🎙 Briefing wird nach dem Alarm vorgelesen...</div>
+    </div>
+  </div>
+  <style>
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  </style>
+
   <!-- ALARM MODAL -->
   <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
     <div class="modal">
@@ -439,9 +456,9 @@ async function toggleAlarm(id) {
 }
 
 function togglePlay(){
-  const w=document.getElementById('bp-wave'),p=document.querySelector('.bp-play');
-  if(w.style.display==='none'){w.style.display='flex';p.textContent='⏸'}
-  else{w.style.display='none';p.textContent='▶'}
+  if(tts.speaking){tts.stop();return;}
+  if(latestBriefingText){tts.speak(latestBriefingText);}
+  else{tts.speak('Noch kein Briefing vorhanden. Dein Bot wird eins erstellen.');}
 }
 
 // === SETTINGS ===
@@ -495,6 +512,161 @@ async function saveAlarm(){
   }catch(e){alert(e.message)}
 }
 
+// === TTS ENGINE ===
+const tts = {
+  speaking: false,
+  utterance: null,
+  
+  getVoice() {
+    const voices = speechSynthesis.getVoices();
+    // Prefer German voices, then English
+    return voices.find(v => v.lang.startsWith('de') && v.name.includes('Male')) ||
+           voices.find(v => v.lang.startsWith('de')) ||
+           voices.find(v => v.lang.startsWith('en') && v.name.includes('Male')) ||
+           voices[0];
+  },
+
+  speak(text, onEnd) {
+    if (!('speechSynthesis' in window)) { console.error('TTS not supported'); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice = this.getVoice();
+    u.rate = 1.0;
+    u.pitch = 0.9; // slightly deeper = more Jarvis
+    u.volume = 1.0;
+    u.lang = 'de-DE';
+    u.onstart = () => { this.speaking = true; updatePlayerUI(true); };
+    u.onend = () => { this.speaking = false; updatePlayerUI(false); if (onEnd) onEnd(); };
+    u.onerror = () => { this.speaking = false; updatePlayerUI(false); };
+    this.utterance = u;
+    speechSynthesis.speak(u);
+  },
+
+  stop() {
+    speechSynthesis.cancel();
+    this.speaking = false;
+    updatePlayerUI(false);
+  },
+
+  // Play audio URL (for premium TTS like OpenAI)
+  playAudio(url, onEnd) {
+    const audio = new Audio(url);
+    audio.onplay = () => { this.speaking = true; updatePlayerUI(true); };
+    audio.onended = () => { this.speaking = false; updatePlayerUI(false); if (onEnd) onEnd(); };
+    audio.onerror = () => { this.speaking = false; updatePlayerUI(false); };
+    audio.play();
+  }
+};
+
+function updatePlayerUI(playing) {
+  const w = document.getElementById('bp-wave');
+  const p = document.querySelector('.bp-play');
+  if (playing) { w.style.display = 'flex'; p.textContent = '⏸'; }
+  else { w.style.display = 'none'; p.textContent = '▶'; }
+}
+
+// Load voices (async in some browsers)
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => tts.getVoice();
+}
+
+// === ALARM CHECKER ===
+let lastAlarmCheck = '';
+let latestBriefingText = 'Guten Morgen! Dein Briefing wird geladen...';
+
+async function loadLatestBriefing() {
+  try {
+    const d = await api('/api/briefings/latest');
+    if (d.briefing && d.briefing.content) {
+      latestBriefingText = d.briefing.content;
+      const bp = document.getElementById('bp');
+      bp.classList.add('active');
+      document.querySelector('.bp-sub').textContent = 
+        d.briefing.modules ? d.briefing.modules.join(', ') : 'Briefing bereit';
+    }
+  } catch(e) { /* no briefing yet, ok */ }
+}
+
+function checkAlarms() {
+  const now = new Date();
+  const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const day = now.getDay();
+  
+  if (hhmm === lastAlarmCheck) return; // only check once per minute
+  lastAlarmCheck = hhmm;
+  
+  const triggered = alarms.find(a => a.active && a.time === hhmm && (a.days.length === 0 || a.days.includes(day)));
+  if (triggered) {
+    triggerAlarm(triggered);
+  }
+}
+
+function triggerAlarm(alarm) {
+  // Show alarm screen
+  document.getElementById('alarm-overlay').classList.add('active');
+  document.getElementById('alarm-overlay-name').textContent = alarm.name;
+  document.getElementById('alarm-overlay-time').textContent = alarm.time;
+  
+  // Play alarm sound, then briefing
+  playAlarmSound(() => {
+    // After alarm sound, speak the briefing
+    if (latestBriefingText) {
+      tts.speak(latestBriefingText);
+    }
+  });
+}
+
+function playAlarmSound(onEnd) {
+  // Simple alarm tone using Web Audio API
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.value = 0.3;
+    osc.start();
+    
+    // Beep pattern: on-off-on-off-on
+    let beeps = 0;
+    const interval = setInterval(() => {
+      beeps++;
+      gain.gain.value = gain.gain.value > 0 ? 0 : 0.3;
+      if (beeps >= 8) {
+        clearInterval(interval);
+        osc.stop();
+        ctx.close();
+        if (onEnd) setTimeout(onEnd, 500);
+      }
+    }, 300);
+  } catch(e) {
+    if (onEnd) onEnd();
+  }
+}
+
+function dismissAlarm() {
+  document.getElementById('alarm-overlay').classList.remove('active');
+  tts.stop();
+}
+
+function snoozAlarm() {
+  document.getElementById('alarm-overlay').classList.remove('active');
+  tts.stop();
+  // Snooze: re-trigger in 5 min
+  setTimeout(() => {
+    const now = new Date();
+    const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    triggerAlarm({ name: 'Snooze', time: hhmm });
+  }, 5 * 60 * 1000);
+}
+
+// Check alarms every 10 seconds
+setInterval(checkAlarms, 10000);
+// Load briefing periodically
+setInterval(loadLatestBriefing, 60000);
+
 // === ACCOUNT ===
 async function deleteAccount(){
   if(!confirm('Account wirklich loeschen? Alle Daten werden unwiderruflich geloescht:\n\n- Account & Login\n- Alle Wecker\n- Alle API-Keys\n- Alle Briefings\n- Audit-Logs\n\nDas kann nicht rueckgaengig gemacht werden.')) return;
@@ -517,7 +689,7 @@ function exportData(){
 
 // === INIT ===
 if(token && user){
-  if(onboarded){showScreen('home');loadAlarms();}
+  if(onboarded){showScreen('home');loadAlarms();loadLatestBriefing();}
   else{showScreen('onboarding');renderOb();}
 }
 </script>

@@ -84,15 +84,60 @@ const commands = {
 
   async briefing() {
     const args = parseArgs();
+    let content = args.content || '';
+    
+    // Auto-generate briefing text if no content provided
+    if (!content) {
+      console.log('Generating briefing content...');
+      const parts = [];
+      const modules = (args.modules || 'weather,calendar,news').split(',');
+      
+      const now = new Date();
+      const dayNames = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+      const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+      
+      parts.push(`Guten Morgen! Heute ist ${dayNames[now.getDay()]}, der ${now.getDate()}. ${monthNames[now.getMonth()]} ${now.getFullYear()}.`);
+      
+      if (modules.includes('weather')) {
+        // Fetch weather from wttr.in
+        try {
+          const wRes = await fetch('https://wttr.in/Berlin?format=j1');
+          const w = await wRes.json();
+          const cur = w.current_condition[0];
+          const temp = cur.temp_C;
+          const desc = cur.lang_de?.[0]?.value || cur.weatherDesc[0].value;
+          const feelsLike = cur.FeelsLikeC;
+          parts.push(`Das Wetter: ${desc}, ${temp} Grad, gefühlt ${feelsLike} Grad.`);
+          
+          const today = w.weather[0];
+          parts.push(`Tageshöchstwert ${today.maxtempC} Grad, Tiefstwert ${today.mintempC} Grad.`);
+        } catch(e) {
+          parts.push('Wetterdaten konnten nicht geladen werden.');
+        }
+      }
+      
+      if (modules.includes('calendar')) {
+        parts.push('Dein Kalender: Keine Termine fuer heute eingetragen.');
+      }
+      
+      if (modules.includes('news')) {
+        parts.push('Das waren die wichtigsten Infos fuer deinen Start in den Tag. Viel Erfolg!');
+      }
+      
+      content = parts.join(' ');
+      console.log(`Generated: ${content.length} chars`);
+    }
+    
     const body = {
-      alarmId: args.alarm || args.id || null,
-      modules: (args.modules || 'weather,news,calendar').split(','),
-      content: args.content || '',
+      alarmId: args.alarm || args.id || '',
+      modules: (args.modules || 'weather,calendar,news').split(','),
+      content,
       audioUrl: args.audio || null,
     };
     const d = await api('/api/bot/briefings', { method: 'POST', body: JSON.stringify(body) });
     console.log(`✅ Briefing created: ${d.briefing.id}`);
     console.log(`Modules: ${d.briefing.modules.join(', ')}`);
+    console.log(`Content: ${content.substring(0, 100)}...`);
   },
 
   async settings() {
