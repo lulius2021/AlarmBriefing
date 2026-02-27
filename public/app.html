@@ -169,7 +169,7 @@
   <!-- ONBOARDING -->
   <div class="screen" id="s-onboarding">
     <div class="ob">
-      <div class="ob-progress"><div class="ob-dot active" data-s="0"></div><div class="ob-dot" data-s="1"></div></div>
+      <div class="ob-progress"><div class="ob-dot active" data-s="0"></div><div class="ob-dot" data-s="1"></div><div class="ob-dot" data-s="2"></div></div>
       <div class="ob-body" id="ob-body"></div>
       <div class="ob-footer" id="ob-footer"></div>
     </div>
@@ -257,7 +257,10 @@
         <div class="time-input"><input class="time-field" id="m-h" value="07" maxlength="2"><span class="time-colon">:</span><input class="time-field" id="m-m" value="00" maxlength="2"></div>
         <div class="field"><div class="field-label">Name</div><input class="input" id="m-name" placeholder="z.B. Morgenwecker"></div>
         <div class="field"><div class="field-label">Wochentage</div><div class="days-row" id="m-days"></div></div>
-        <div class="field"><div class="field-label">Briefing</div><div class="radio-group" id="m-brief"></div></div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+          <div style="font-size:11px;color:var(--blue);font-weight:600;margin-bottom:3px">🤖 Briefing</div>
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.4">Dein Clawdbot entscheidet automatisch was ins Briefing kommt — Wetter, Kalender, News etc. Du musst nichts einstellen.</div>
+        </div>
         <button class="btn btn-blue btn-full" onclick="saveAlarm()">Speichern</button>
       </div>
     </div>
@@ -325,20 +328,47 @@ function logout() {
 
 // === ONBOARDING ===
 let obStep = 0;
+let obBotKey = null;
 const obSteps = [
-  { icon:'🤖', title:'Bot verbinden', desc:'Dein Clawdbot steuert AlarmBriefing. Er erstellt Wecker und generiert Audio-Briefings die beim Alarm ueber deine Lautsprecher abgespielt werden.',
-    extra:()=>`<div class="ob-box"><div class="ob-box-title">So funktioniert's</div><p>1. Gehe in die Einstellungen</p><p>2. Generiere einen API-Key</p><p>3. Gib den Key deinem Clawdbot</p><p>4. Der Bot erstellt Alarme + Briefings fuer dich</p></div>`,
-    btns:[{text:'Weiter',blue:true,fn:'obNext()'}]},
-  { icon:'✅', title:'Bereit!', desc:'Dein Wecker mit Jarvis-Briefings. Starte jetzt und werde morgens wie Tony Stark geweckt.',
-    extra:()=>`<div class="ob-box"><div class="ob-box-title">Was dein Bot kann</div><p>⏰ Wecker erstellen und verwalten</p><p>🎙 Audio-Briefings generieren (TTS)</p><p>🌤 Wetter, Kalender, News einbinden</p><p>🔊 Abspielen ueber deine Lautsprecher</p></div>`,
+  { icon:'🔔', title:'Willkommen bei<br><span>AlarmBriefing</span>', desc:'Dein intelligenter Wecker mit Jarvis-Briefings. Der Clawdbot erstellt Wecker und spricht dir morgens Wetter, Termine und News ueber deine Lautsprecher vor.',
+    extra:()=>`<div class="ob-box"><div class="ob-box-title">So funktioniert's</div><p>🤖 Dein Clawdbot steuert alles automatisch</p><p>⏰ Er erstellt Wecker fuer dich</p><p>🎙 Er generiert Audio-Briefings (wie Jarvis)</p><p>🔊 Beim Alarm hoerst du dein Briefing</p></div>`,
+    btns:[{text:'Bot verbinden →',blue:true,fn:'obNext()'}]},
+  { icon:'🔑', title:'Bot verbinden', desc:'Generiere jetzt einen API-Key und gib ihn deinem Clawdbot. Damit kann er auf deine App zugreifen.',
+    extra:()=>{
+      if(obBotKey) return `
+        <div class="ob-box"><div class="ob-box-title">✅ Key generiert!</div><p>Kopiere diesen Key und gib ihn deinem Clawdbot als <b>ALARMBRIEFING_API_KEY</b>:</p></div>
+        <div class="ob-key" onclick="navigator.clipboard.writeText('${obBotKey}');this.textContent='✓ Kopiert!';setTimeout(()=>this.textContent='${obBotKey}',1500)">${obBotKey}</div>
+        <div class="ob-key-hint">Antippen zum Kopieren</div>`;
+      return `
+        <div class="ob-box"><div class="ob-box-title">API-Key generieren</div><p>Klicke den Button um einen Key zu erstellen. Diesen Key braucht dein Clawdbot um auf die App zuzugreifen.</p></div>
+        <button class="btn btn-blue btn-sm" onclick="obGenKey()" id="ob-gen-btn">🔑 Key generieren</button>
+        <div id="ob-gen-status" style="font-size:11px;color:var(--text-muted);margin-top:6px"></div>`;
+    },
+    btns:()=>obBotKey?[{text:'Zurück',blue:false,fn:'obBack()'},{text:'Weiter →',blue:true,fn:'obNext()'}]:[{text:'Zurück',blue:false,fn:'obBack()'},{text:'Spaeter verbinden',blue:false,fn:'obNext()'}]},
+  { icon:'✅', title:'Alles bereit!', desc:'Dein Clawdbot kann jetzt Wecker erstellen und Briefings generieren. Du wirst morgens wie Tony Stark geweckt.',
+    extra:()=>`<div class="ob-box"><div class="ob-box-title">Naechste Schritte</div>
+      <p>${obBotKey?'✅ Bot-Key generiert — gib ihn deinem Clawdbot':'⚠️ Bot noch nicht verbunden — du kannst das spaeter in den Settings machen'}</p>
+      <p>⏰ Erstelle deinen ersten Wecker</p>
+      <p>🎙 Dein Bot kuemmert sich um den Rest</p></div>`,
     btns:[{text:'Zurück',blue:false,fn:'obBack()'},{text:'App starten',blue:true,fn:'finishOb()'}]}
 ];
 
 function renderOb() {
   const s = obSteps[obStep];
   document.getElementById('ob-body').innerHTML = `<div class="ob-icon">${s.icon}</div><div class="ob-title">${s.title}</div><div class="ob-desc">${s.desc}</div>${typeof s.extra==='function'?s.extra():''}`;
-  document.getElementById('ob-footer').innerHTML = s.btns.map(b=>`<button class="btn btn-flex ${b.blue?'btn-blue':''}" onclick="${b.fn}">${b.text}</button>`).join('');
+  const btns = typeof s.btns==='function'?s.btns():s.btns;
+  document.getElementById('ob-footer').innerHTML = btns.map(b=>`<button class="btn btn-flex ${b.blue?'btn-blue':''}" onclick="${b.fn}">${b.text}</button>`).join('');
   document.querySelectorAll('.ob-dot').forEach((d,i)=>d.className='ob-dot'+(i<=obStep?' active':''));
+}
+async function obGenKey(){
+  const btn=document.getElementById('ob-gen-btn');
+  const status=document.getElementById('ob-gen-status');
+  btn.disabled=true;btn.textContent='Generiere...';
+  try{
+    const d=await api('/api/auth/bot-key',{method:'POST'});
+    obBotKey=d.key;currentBotKey=d.key;
+    renderOb();
+  }catch(e){status.textContent='Fehler: '+e.message;btn.disabled=false;btn.textContent='🔑 Key generieren'}
 }
 function obNext(){if(obStep<obSteps.length-1){obStep++;renderOb()}}
 function obBack(){if(obStep>0){obStep--;renderOb()}}
@@ -367,8 +397,7 @@ function renderHome() {
   if (next) {
     document.getElementById('na-time').textContent=next.time;
     document.getElementById('na-label').textContent=next.name;
-    const bl=next.briefingMode==='none'?'Nur Alarm':next.briefingMode==='short'?'Kurzbriefing':'Wetter, News, Kalender';
-    document.getElementById('na-brief').textContent=next.briefingMode!=='none'?'🎙 '+bl:'🔕 Kein Briefing';
+    document.getElementById('na-brief').textContent='🎙 Briefing wird vom Bot erstellt';
     document.getElementById('next-alarm').style.display='flex';
   } else { document.getElementById('next-alarm').style.display='none'; }
 
@@ -382,8 +411,7 @@ function renderHome() {
   }
   list.innerHTML=sorted.map(a=>{
     const dh=a.days&&a.days.length?a.days.map(d=>`<span class="day-tag">${DAYS[d]}</span>`).join(''):'<span class="day-tag">Einmalig</span>';
-    const bl=a.briefingMode==='none'?'Nur Alarm':a.briefingMode==='short'?'Kurz':'Standard';
-    return`<div class="alarm-card ${a.active?'':'inactive'}"><div><div class="alarm-time">${a.time}</div><div class="alarm-meta">${a.name} · ${bl} ${a.managedBy==='bot'?'<span class="bot-tag">BOT</span>':''}</div><div class="alarm-days">${dh}</div></div><div class="toggle ${a.active?'on':''}" onclick="event.stopPropagation();toggleAlarm('${a.id}')"></div></div>`;
+    return`<div class="alarm-card ${a.active?'':'inactive'}"><div><div class="alarm-time">${a.time}</div><div class="alarm-meta">${a.name} ${a.managedBy==='bot'?'<span class="bot-tag">BOT</span>':''}</div><div class="alarm-days">${dh}</div></div><div class="toggle ${a.active?'on':''}" onclick="event.stopPropagation();toggleAlarm('${a.id}')"></div></div>`;
   }).join('');
 }
 
@@ -433,23 +461,19 @@ function copyKey() {
 
 // === MODAL ===
 function openModal(){
-  editDays=[1,2,3,4,5];editBrief='standard';
+  editDays=[1,2,3,4,5];
   document.getElementById('m-h').value='07';document.getElementById('m-m').value='00';document.getElementById('m-name').value='';
-  renderDays();renderBrief();
+  renderDays();
   document.getElementById('modal').classList.add('active');
 }
 function closeModal(){document.getElementById('modal').classList.remove('active')}
 function renderDays(){document.getElementById('m-days').innerHTML=DAYS.map((l,i)=>`<div class="day-btn ${editDays.includes(i)?'active':''}" onclick="editDays.includes(${i})?editDays=editDays.filter(x=>x!==${i}):editDays.push(${i});renderDays()">${l}</div>`).join('')}
-function renderBrief(){
-  const o=[['none','Nur Alarm'],['short','Kurzbriefing (10-30s)'],['standard','Vollbriefing (1-3 Min.)']];
-  document.getElementById('m-brief').innerHTML=o.map(([k,l])=>`<div class="radio-opt ${editBrief===k?'active':''}" onclick="editBrief='${k}';renderBrief()"><div class="rdot"><div class="rdot-in"></div></div><span>${l}</span></div>`).join('');
-}
 async function saveAlarm(){
   const h=document.getElementById('m-h').value.padStart(2,'0');
   const m=document.getElementById('m-m').value.padStart(2,'0');
   const name=document.getElementById('m-name').value||'Alarm';
   try{
-    await api('/api/alarms',{method:'POST',body:JSON.stringify({name,time:`${h}:${m}`,days:editDays,briefingMode:editBrief})});
+    await api('/api/alarms',{method:'POST',body:JSON.stringify({name,time:`${h}:${m}`,days:editDays,briefingMode:'auto'})});
     closeModal();loadAlarms();
   }catch(e){alert(e.message)}
 }
