@@ -16,16 +16,21 @@ export async function POST(req: NextRequest) {
   const count = await DB.countAlarms(userId);
   if (count >= 50) return NextResponse.json({ error: 'Alarm-Limit erreicht (50)' }, { status: 429 });
 
-  const body = await req.json();
-  const alarm = await DB.createAlarm({
-    id: generateId(), user_id: userId,
-    name: body.name || 'Alarm', active: body.active ?? true,
-    time: body.time || '07:00', days: body.days || [],
-    snooze_enabled: body.snoozeEnabled ?? true, snooze_duration: body.snoozeDuration || 5,
-    sound: body.sound || 'default', vibration: body.vibration ?? true,
-    briefing_mode: body.briefingMode || 'standard', managed_by: 'manual',
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-  });
-
-  return NextResponse.json({ alarm }, { status: 201 });
+  try {
+    const body = await req.json();
+    const timeStr = (body.time || '07:00').includes(':') && (body.time || '07:00').split(':').length === 2
+      ? `${body.time}:00` : (body.time || '07:00:00');
+    const alarm = await DB.createAlarm({
+      id: generateId(), user_id: userId,
+      name: body.name || 'Alarm', active: body.active ?? true,
+      time: timeStr, days: body.days || [],
+      snooze_enabled: body.snoozeEnabled ?? true, snooze_duration: body.snoozeDuration || 5,
+      sound: body.sound || 'default', vibration: body.vibration ?? true,
+      briefing_mode: body.briefingMode || 'standard', managed_by: 'manual',
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    });
+    return NextResponse.json({ alarm }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Alarm konnte nicht erstellt werden' }, { status: 500 });
+  }
 }
