@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "AlarmBriefing",
+    "slug": "alarmbriefing",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "alarmbriefing",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0e1a"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.alarmbriefing.ios",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Wird nicht benötigt",
+        "UIBackgroundModes": ["audio", "fetch", "remote-notification"]
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "sounds": ["./assets/alarm.wav"]
+        }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "https://alarm-briefing.vercel.app",
+      "eas": {
+        "projectId": "alarmbriefing"
+      }
+    }
+  }
+}
