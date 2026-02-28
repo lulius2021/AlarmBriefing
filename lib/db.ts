@@ -11,6 +11,9 @@ export interface User {
   name: string;
   password_hash: string;
   settings: Record<string, any>;
+  email_verified: boolean;
+  verify_token?: string | null;
+  verify_expires?: string | null;
   created_at: string;
 }
 
@@ -106,6 +109,24 @@ export const DB = {
       return data;
     }
     return mem.users.get(id) || null;
+  },
+
+  async getUserByVerifyToken(token: string): Promise<User | null> {
+    if (isSupabaseConfigured()) {
+      const { data } = await getSupabaseAdmin()!.from('app_users').select('*').eq('verify_token', token).single();
+      return data;
+    }
+    for (const [, u] of mem.users) { if ((u as any).verify_token === token) return u; }
+    return null;
+  },
+
+  async verifyUser(id: string): Promise<void> {
+    if (isSupabaseConfigured()) {
+      await getSupabaseAdmin()!.from('app_users').update({ email_verified: true, verify_token: null, verify_expires: null }).eq('id', id);
+      return;
+    }
+    const u = mem.users.get(id);
+    if (u) { (u as any).email_verified = true; (u as any).verify_token = null; }
   },
 
   async deleteUser(id: string): Promise<void> {

@@ -33,7 +33,7 @@ export default function HomeScreen() {
     }
     try {
       const b = await getLatestBriefing();
-      if (b.briefing?.content) setBriefing(b.briefing.content);
+      if (b.briefing?.content_text || b.briefing?.content) setBriefing(b.briefing.content_text || b.briefing.content);
     } catch (e) {}
   }, []);
 
