@@ -12,3 +12,4 @@ backend/node_modules/
 backend/data/
 .env
 package-lock.json
+.next/
