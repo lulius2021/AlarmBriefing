@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -152,13 +152,13 @@
     <div class="auth">
       <div class="auth-icon">🔔</div>
       <div class="auth-title">Alarm<span>Briefing</span></div>
-      <div class="auth-desc">Melde dich an um deine Wecker und Briefings geraetuebergreifend zu synchronisieren.</div>
+      <div class="auth-desc" id="auth-desc"></div>
       <div class="auth-form" id="auth-form">
-        <input class="input" id="auth-name" placeholder="Name (optional)">
-        <input class="input" id="auth-email" type="email" placeholder="Email" autocomplete="email">
-        <input class="input" id="auth-pass" type="password" placeholder="Passwort (min. 8 Zeichen)" autocomplete="current-password">
+        <input class="input" id="auth-name">
+        <input class="input" id="auth-email" type="email" autocomplete="email">
+        <input class="input" id="auth-pass" type="password" autocomplete="current-password">
         <div class="auth-error" id="auth-error"></div>
-        <button class="btn btn-blue btn-full" id="auth-btn" onclick="doAuth()">Registrieren</button>
+        <button class="btn btn-blue btn-full" id="auth-btn" onclick="doAuth()"></button>
       </div>
       <div class="auth-switch" id="auth-switch" onclick="toggleAuthMode()">
         Schon registriert? <span>Anmelden</span>
@@ -267,7 +267,7 @@
       <div id="alarm-overlay-time" style="font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:700;color:var(--blue-light)">07:00</div>
       <div id="alarm-overlay-name" style="font-size:16px;color:var(--text-dim);margin:8px 0 24px">Morgenwecker</div>
       <div style="display:flex;gap:12px;justify-content:center">
-        <button class="btn" onclick="snoozAlarm()" style="min-width:120px">😴 Snooze</button>
+        <button class="btn" onclick="snoozeAlarm()" style="min-width:120px">😴 Snooze</button>
         <button class="btn btn-blue" onclick="dismissAlarm()" style="min-width:120px">✅ Aufstehen</button>
       </div>
       <div style="margin-top:16px;font-size:12px;color:var(--text-muted)" id="alarm-overlay-status">🎙 Briefing wird nach dem Alarm vorgelesen...</div>
@@ -298,7 +298,108 @@
 
 <script>
 const API = '';
-const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+// === i18n ===
+const browserLang = (navigator.language || 'en').slice(0, 2);
+const LANG = ['de'].includes(browserLang) ? browserLang : 'en';
+document.getElementById('html-root').lang = LANG;
+
+const I18N = {
+  de: {
+    days: ['So','Mo','Di','Mi','Do','Fr','Sa'],
+    authDesc: 'Melde dich an um deine Wecker und Briefings geräteübergreifend zu synchronisieren.',
+    register: 'Registrieren', login: 'Anmelden',
+    switchToLogin: 'Schon registriert? <span>Anmelden</span>',
+    switchToRegister: 'Noch kein Account? <span>Registrieren</span>',
+    namePlaceholder: 'Name (optional)', emailPlaceholder: 'Email', passPlaceholder: 'Passwort (min. 8 Zeichen)',
+    alarmsActive: (n) => `${n} Alarm${n!==1?'e':''} aktiv`,
+    briefingByBot: '🎙 Briefing wird vom Bot erstellt',
+    morningBriefing: 'Morgenbriefing', briefingSources: 'Wetter, Termine, News',
+    noAlarms: 'Noch keine Wecker.<br>Tippe + oder lass deinen Bot einen erstellen.',
+    noBriefing: 'Noch kein Briefing vorhanden. Dein Bot wird eins erstellen.',
+    newAlarm: 'Neuer Wecker', done: 'Fertig', name: 'Name', weekdays: 'Wochentage', save: 'Speichern',
+    briefingTitle: '🤖 Briefing', briefingDesc: 'Dein Clawdbot entscheidet automatisch was ins Briefing kommt — Wetter, Kalender, News etc. Du musst nichts einstellen.',
+    settings: 'Einstellungen', back: '← Zurück',
+    botConnection: 'Bot-Verbindung', newKey: '🔑 Neuen Key generieren', copy: '📋 Kopieren',
+    noBotConnected: 'Kein Bot verbunden', keyGenerated: 'Key generiert — kopieren und dem Bot geben',
+    briefingSourcesTitle: 'Briefing-Quellen', briefingSourcesDesc: 'Dein Bot sammelt diese Daten und erstellt daraus ein Audio-Briefing das beim Alarm abgespielt wird — wie Jarvis.',
+    weather: '🌤 Wetter', calendar: '📅 Kalender', news: '📰 Nachrichten', tasks: '✅ Aufgaben',
+    audioTitle: 'Audio', audioDesc: 'Stimme und Tempo für dein Audio-Briefing über die Lautsprecher.',
+    voice: 'Stimme', speed: 'Tempo',
+    account: 'Account', email: 'Email', exportData: '📦 Daten exportieren', logout: '🚪 Abmelden', deleteAccount: '🗑 Account löschen',
+    legal: 'Rechtliches', privacy: 'Datenschutzerklärung', terms: 'Nutzungsbedingungen', imprint: 'Impressum', support: 'Support & Hilfe',
+    botActivity: 'Bot-Aktivitäten', noActivity: 'Noch keine Aktivitäten',
+    snooze: '😴 Snooze', dismiss: '✅ Aufstehen', briefingAfter: '🎙 Briefing wird nach dem Alarm vorgelesen...',
+    deleteConfirm: 'Account wirklich löschen? Alle Daten werden unwiderruflich gelöscht:\n\n- Account & Login\n- Alle Wecker\n- Alle API-Keys\n- Alle Briefings\n- Audit-Logs\n\nDas kann nicht rückgängig gemacht werden.',
+    deleteConfirm2: 'Bist du sicher? Letzte Chance.',
+    oneTime: 'Einmalig',
+    obWelcomeTitle: 'Willkommen bei<br><span>AlarmBriefing</span>',
+    obWelcomeDesc: 'Dein intelligenter Wecker mit Jarvis-Briefings. Der Clawdbot erstellt Wecker und spricht dir morgens Wetter, Termine und News über deine Lautsprecher vor.',
+    obHowTitle: "So funktioniert's",
+    obHow1: '🤖 Dein Clawdbot steuert alles automatisch', obHow2: '⏰ Er erstellt Wecker für dich',
+    obHow3: '🎙 Er generiert Audio-Briefings (wie Jarvis)', obHow4: '🔊 Beim Alarm hörst du dein Briefing',
+    obConnectTitle: 'Bot verbinden', obConnectDesc: 'Generiere jetzt einen API-Key und gib ihn deinem Clawdbot. Damit kann er auf deine App zugreifen.',
+    obGenBtn: '🔑 Key generieren', obGenerating: 'Generiere...',
+    obKeyGenerated: '✅ Key generiert!', obKeyCopyHint: 'Kopiere diesen Key und gib ihn deinem Clawdbot als <b>ALARMBRIEFING_API_KEY</b>:',
+    obTapCopy: 'Antippen zum Kopieren', obConnectLater: 'Später verbinden',
+    obReadyTitle: 'Alles bereit!', obReadyDesc: 'Dein Clawdbot kann jetzt Wecker erstellen und Briefings generieren. Du wirst morgens wie Tony Stark geweckt.',
+    obNext: 'Weiter →', obBack: 'Zurück', obStart: 'App starten',
+    obBotKeyDone: '✅ Bot-Key generiert — gib ihn deinem Clawdbot',
+    obBotKeyMissing: '⚠️ Bot noch nicht verbunden — du kannst das später in den Settings machen',
+    connectBot: 'Bot verbinden →',
+    ttsLang: 'de-DE',
+    botExplain: '<b>So verbindest du deinen Bot:</b><br>1. Klicke "Neuen Key generieren"<br>2. Kopiere den API-Key<br>3. Setze ihn in deinem Clawdbot als <b>ALARMBRIEFING_API_KEY</b><br>4. Der Bot kann dann Wecker erstellen, Briefings generieren und über deine Lautsprecher abspielen.',
+    namePlaceholderAlarm: 'z.B. Morgenwecker',
+  },
+  en: {
+    days: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    authDesc: 'Sign in to sync your alarms and briefings across devices.',
+    register: 'Sign Up', login: 'Sign In',
+    switchToLogin: 'Already have an account? <span>Sign In</span>',
+    switchToRegister: 'No account yet? <span>Sign Up</span>',
+    namePlaceholder: 'Name (optional)', emailPlaceholder: 'Email', passPlaceholder: 'Password (min. 8 characters)',
+    alarmsActive: (n) => `${n} alarm${n!==1?'s':''} active`,
+    briefingByBot: '🎙 Briefing created by bot',
+    morningBriefing: 'Morning Briefing', briefingSources: 'Weather, events, news',
+    noAlarms: 'No alarms yet.<br>Tap + or let your bot create one.',
+    noBriefing: 'No briefing available yet. Your bot will create one.',
+    newAlarm: 'New Alarm', done: 'Done', name: 'Name', weekdays: 'Weekdays', save: 'Save',
+    briefingTitle: '🤖 Briefing', briefingDesc: 'Your Clawdbot automatically decides what goes into the briefing — weather, calendar, news, etc.',
+    settings: 'Settings', back: '← Back',
+    botConnection: 'Bot Connection', newKey: '🔑 Generate New Key', copy: '📋 Copy',
+    noBotConnected: 'No bot connected', keyGenerated: 'Key generated — copy and give to your bot',
+    briefingSourcesTitle: 'Briefing Sources', briefingSourcesDesc: 'Your bot collects this data and creates an audio briefing that plays when your alarm goes off — like Jarvis.',
+    weather: '🌤 Weather', calendar: '📅 Calendar', news: '📰 News', tasks: '✅ Tasks',
+    audioTitle: 'Audio', audioDesc: 'Voice and speed for your audio briefing.',
+    voice: 'Voice', speed: 'Speed',
+    account: 'Account', email: 'Email', exportData: '📦 Export data', logout: '🚪 Sign out', deleteAccount: '🗑 Delete account',
+    legal: 'Legal', privacy: 'Privacy Policy', terms: 'Terms of Service', imprint: 'Imprint', support: 'Support & Help',
+    botActivity: 'Bot Activity', noActivity: 'No activity yet',
+    snooze: '😴 Snooze', dismiss: '✅ Dismiss', briefingAfter: '🎙 Briefing will play after the alarm...',
+    deleteConfirm: 'Really delete your account? All data will be permanently deleted:\n\n- Account & login\n- All alarms\n- All API keys\n- All briefings\n- Audit logs\n\nThis cannot be undone.',
+    deleteConfirm2: 'Are you sure? Last chance.',
+    oneTime: 'One-time',
+    obWelcomeTitle: 'Welcome to<br><span>AlarmBriefing</span>',
+    obWelcomeDesc: 'Your smart alarm clock with Jarvis-style briefings. Clawdbot creates alarms and reads you weather, events, and news every morning.',
+    obHowTitle: 'How it works',
+    obHow1: '🤖 Your Clawdbot handles everything automatically', obHow2: '⏰ It creates alarms for you',
+    obHow3: '🎙 It generates audio briefings (like Jarvis)', obHow4: '🔊 You hear your briefing when the alarm goes off',
+    obConnectTitle: 'Connect Bot', obConnectDesc: 'Generate an API key and give it to your Clawdbot so it can access your app.',
+    obGenBtn: '🔑 Generate Key', obGenerating: 'Generating...',
+    obKeyGenerated: '✅ Key generated!', obKeyCopyHint: 'Copy this key and set it as <b>ALARMBRIEFING_API_KEY</b> in your Clawdbot:',
+    obTapCopy: 'Tap to copy', obConnectLater: 'Connect later',
+    obReadyTitle: 'All set!', obReadyDesc: 'Your Clawdbot can now create alarms and generate briefings. Wake up like Tony Stark every morning.',
+    obNext: 'Next →', obBack: 'Back', obStart: 'Start App',
+    obBotKeyDone: '✅ Bot key generated — give it to your Clawdbot',
+    obBotKeyMissing: '⚠️ Bot not connected yet — you can do this later in Settings',
+    connectBot: 'Connect Bot →',
+    ttsLang: 'en-US',
+    botExplain: '<b>How to connect your bot:</b><br>1. Click "Generate New Key"<br>2. Copy the API key<br>3. Set it as <b>ALARMBRIEFING_API_KEY</b> in your Clawdbot<br>4. The bot can then create alarms, generate briefings, and play them through your speakers.',
+    namePlaceholderAlarm: 'e.g. Morning alarm',
+  }
+};
+const L = I18N[LANG];
+const DAYS = L.days;
 let token = localStorage.getItem('ab_token');
 let user = JSON.parse(localStorage.getItem('ab_user')||'null');
 let onboarded = localStorage.getItem('ab_onboarded');
@@ -320,12 +421,19 @@ async function api(path, opts={}) {
 // === AUTH ===
 function toggleAuthMode() {
   authMode = authMode==='register'?'login':'register';
-  document.getElementById('auth-btn').textContent = authMode==='register'?'Registrieren':'Anmelden';
-  document.getElementById('auth-switch').innerHTML = authMode==='register'
-    ?'Schon registriert? <span>Anmelden</span>'
-    :'Noch kein Account? <span>Registrieren</span>';
+  document.getElementById('auth-btn').textContent = authMode==='register'?L.register:L.login;
+  document.getElementById('auth-switch').innerHTML = authMode==='register'?L.switchToLogin:L.switchToRegister;
   document.getElementById('auth-name').style.display = authMode==='register'?'':'none';
   document.getElementById('auth-error').textContent = '';
+}
+
+function initI18nUI() {
+  document.getElementById('auth-desc').textContent = L.authDesc;
+  document.getElementById('auth-name').placeholder = L.namePlaceholder;
+  document.getElementById('auth-email').placeholder = L.emailPlaceholder;
+  document.getElementById('auth-pass').placeholder = L.passPlaceholder;
+  document.getElementById('auth-btn').textContent = L.register;
+  document.getElementById('auth-switch').innerHTML = L.switchToLogin;
 }
 
 async function doAuth() {
@@ -425,13 +533,13 @@ async function loadAlarms() {
 function renderHome() {
   const sorted = [...alarms].sort((a,b)=>a.active===b.active?a.time.localeCompare(b.time):a.active?-1:1);
   const active = alarms.filter(a=>a.active);
-  document.getElementById('home-sub').textContent = `${active.length} Alarm${active.length!==1?'e':''} aktiv`;
+  document.getElementById('home-sub').textContent = L.alarmsActive(active.length);
 
   const next = sorted.find(a=>a.active);
   if (next) {
     document.getElementById('na-time').textContent=next.time;
     document.getElementById('na-label').textContent=next.name;
-    document.getElementById('na-brief').textContent='🎙 Briefing wird vom Bot erstellt';
+    document.getElementById('na-brief').textContent=L.briefingByBot;
     document.getElementById('next-alarm').style.display='flex';
   } else { document.getElementById('next-alarm').style.display='none'; }
 
@@ -440,11 +548,11 @@ function renderHome() {
 
   const list=document.getElementById('alarm-list');
   if(sorted.length===0){
-    list.innerHTML='<div class="empty-state"><div class="icon">⏰</div><div>Noch keine Wecker.<br>Tippe + oder lass deinen Bot einen erstellen.</div></div>';
+    list.innerHTML=`<div class="empty-state"><div class="icon">⏰</div><div>${L.noAlarms}</div></div>`;
     return;
   }
   list.innerHTML=sorted.map(a=>{
-    const dh=a.days&&a.days.length?a.days.map(d=>`<span class="day-tag">${DAYS[d]}</span>`).join(''):'<span class="day-tag">Einmalig</span>';
+    const dh=a.days&&a.days.length?a.days.map(d=>`<span class="day-tag">${DAYS[d]}</span>`).join(''):`<span class="day-tag">${L.oneTime}</span>`;
     return`<div class="alarm-card ${a.active?'':'inactive'}"><div><div class="alarm-time">${a.time}</div><div class="alarm-meta">${a.name} ${a.managedBy==='bot'?'<span class="bot-tag">BOT</span>':''}</div><div class="alarm-days">${dh}</div></div><div class="toggle ${a.active?'on':''}" onclick="event.stopPropagation();toggleAlarm('${a.id}')"></div></div>`;
   }).join('');
 }
@@ -458,7 +566,7 @@ async function toggleAlarm(id) {
 function togglePlay(){
   if(tts.speaking){tts.stop();return;}
   if(latestBriefingText){tts.speak(latestBriefingText);}
-  else{tts.speak('Noch kein Briefing vorhanden. Dein Bot wird eins erstellen.');}
+  else{tts.speak(L.noBriefing);}
 }
 
 // === SETTINGS ===
@@ -534,7 +642,7 @@ const tts = {
     u.rate = 1.0;
     u.pitch = 0.9; // slightly deeper = more Jarvis
     u.volume = 1.0;
-    u.lang = 'de-DE';
+    u.lang = L.ttsLang;
     u.onstart = () => { this.speaking = true; updatePlayerUI(true); };
     u.onend = () => { this.speaking = false; updatePlayerUI(false); if (onEnd) onEnd(); };
     u.onerror = () => { this.speaking = false; updatePlayerUI(false); };
@@ -651,7 +759,7 @@ function dismissAlarm() {
   tts.stop();
 }
 
-function snoozAlarm() {
+function snoozeAlarm() {
   document.getElementById('alarm-overlay').classList.remove('active');
   tts.stop();
   // Snooze: re-trigger in 5 min
@@ -669,8 +777,8 @@ setInterval(loadLatestBriefing, 60000);
 
 // === ACCOUNT ===
 async function deleteAccount(){
-  if(!confirm('Account wirklich loeschen? Alle Daten werden unwiderruflich geloescht:\n\n- Account & Login\n- Alle Wecker\n- Alle API-Keys\n- Alle Briefings\n- Audit-Logs\n\nDas kann nicht rueckgaengig gemacht werden.')) return;
-  if(!confirm('Bist du sicher? Letzte Chance.')) return;
+  if(!confirm(L.deleteConfirm)) return;
+  if(!confirm(L.deleteConfirm2)) return;
   try{
     await api('/api/auth/delete',{method:'DELETE'});
     token=null;user=null;
@@ -688,6 +796,7 @@ function exportData(){
 }
 
 // === INIT ===
+initI18nUI();
 if(token && user){
   if(onboarded){showScreen('home');loadAlarms();loadLatestBriefing();}
   else{showScreen('onboarding');renderOb();}

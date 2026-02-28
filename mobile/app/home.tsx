@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { colors } from '@/lib/theme';
 import { getAlarms, getLatestBriefing, clearToken } from '@/lib/api';
+import { getLocales } from 'expo-localization';
 
 const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -49,9 +50,12 @@ export default function HomeScreen() {
       Speech.stop();
       setSpeaking(false);
     } else {
-      const text = briefing || 'Noch kein Briefing vorhanden. Dein Bot wird eins erstellen.';
+      const lang = getLocales()?.[0]?.languageCode || 'en';
+      const ttsLang = lang === 'de' ? 'de-DE' : 'en-US';
+      const fallback = lang === 'de' ? 'Noch kein Briefing vorhanden. Dein Bot wird eins erstellen.' : 'No briefing available yet. Your bot will create one.';
+      const text = briefing || fallback;
       Speech.speak(text, {
-        language: 'de-DE',
+        language: ttsLang,
         rate: 1.0,
         pitch: 0.9,
         onDone: () => setSpeaking(false),

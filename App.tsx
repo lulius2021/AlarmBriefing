@@ -10,6 +10,7 @@ import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { initTokens, getAccessToken } from './src/api/client';
 import { setupNotificationChannel, requestPermissions } from './src/utils/alarmScheduler';
+import { initI18n } from './lib/i18n';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +21,7 @@ export default function App() {
 
   useEffect(() => {
     async function boot() {
+      initI18n();
       await initTokens();
       await setupNotificationChannel();
       await requestPermissions();
