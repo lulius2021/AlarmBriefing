@@ -8,6 +8,7 @@ import { botRouter } from './routes/bot.js';
 import { briefingRouter } from './routes/briefings.js';
 import { auditRouter } from './routes/audit.js';
 import { settingsRouter } from './routes/settings.js';
+import { pairingRouter } from './routes/pairing.js';
 import { authMiddleware } from './middleware/auth.js';
 import { botAuthMiddleware } from './middleware/botAuth.js';
 import db from './db.js';
@@ -52,6 +53,9 @@ app.use('/api/alarms', authMiddleware, alarmRouter);
 app.use('/api/briefings', authMiddleware, briefingRouter);
 app.use('/api/settings', authMiddleware, settingsRouter);
 app.use('/api/audit', authMiddleware, auditRouter);
+
+// Pairing (mixed: some public, some auth-protected)
+app.use('/api/pairing', pairingRouter);
 
 // Bot API routes
 app.use('/api/bot', botAuthMiddleware, botRouter);

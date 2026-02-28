@@ -7,8 +7,10 @@ import { signToken, signRefreshToken, verifyRefreshToken, authMiddleware } from 
 
 export const authRouter = Router();
 
+import { validateAuthBody, stripHtml } from '../middleware/validate.js';
+
 // Register with email
-authRouter.post('/register', async (req, res) => {
+authRouter.post('/register', validateAuthBody, async (req, res) => {
   const { email, password, name } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
@@ -30,7 +32,7 @@ authRouter.post('/register', async (req, res) => {
 });
 
 // Login with email
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', validateAuthBody, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 

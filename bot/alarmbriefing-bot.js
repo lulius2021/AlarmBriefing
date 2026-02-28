@@ -78,8 +78,20 @@ const commands = {
   async 'delete-alarm'() {
     const args = parseArgs();
     if (!args.id) { console.error('--id required'); process.exit(1); }
-    // Note: need to add DELETE endpoint
-    console.log('Delete not yet implemented via bot API. Use the app.');
+    await api(`/api/bot/alarms/${args.id}`, { method: 'DELETE' });
+    console.log(`✅ Alarm deleted: ${args.id}`);
+  },
+
+  async 'update-alarm'() {
+    const args = parseArgs();
+    if (!args.id) { console.error('--id required'); process.exit(1); }
+    const body = {};
+    if (args.name) body.name = args.name;
+    if (args.time) body.time = args.time;
+    if (args.days) body.days = args.days.split(',').map(Number);
+    if (args.active !== undefined) body.active = args.active !== 'false';
+    const d = await api(`/api/bot/alarms/${args.id}`, { method: 'PATCH', body: JSON.stringify(body) });
+    console.log(`✅ Alarm updated: ${d.alarm.name} at ${d.alarm.time}`);
   },
 
   async briefing() {
@@ -168,6 +180,8 @@ if (!cmd || !commands[cmd]) {
   console.log('  ping                  Test connection');
   console.log('  alarms                List all alarms');
   console.log('  create-alarm          Create alarm (--name, --time, --days)');
+  console.log('  update-alarm          Update alarm (--id, --name, --time, --days, --active)');
+  console.log('  delete-alarm          Delete alarm (--id)');
   console.log('  briefing              Generate briefing (--alarm, --content, --modules)');
   console.log('  settings              Read user settings');
   process.exit(0);

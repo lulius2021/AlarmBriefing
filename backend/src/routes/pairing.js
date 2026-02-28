@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import crypto from 'crypto';
-import { supabase } from '../lib/supabase.js';
+import { v4 as uuid } from 'uuid';
+import db from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 export const pairingRouter = Router();
@@ -14,47 +15,37 @@ export const pairingRouter = Router();
  */
 
 // ─── Step 1: User generates a pairing code ───
-pairingRouter.post('/code', authMiddleware, async (req, res) => {
+pairingRouter.post('/code', authMiddleware, (req, res) => {
   // Invalidate any existing pending codes
-  await supabase
-    .from('bot_pairings')
-    .update({ status: 'revoked' })
-    .eq('user_id', req.userId)
-    .eq('status', 'pending');
+  db.prepare("UPDATE bot_pairings SET status = 'revoked' WHERE user_id = ? AND status = 'pending'")
+    .run(req.userId);
 
+  const id = uuid();
   const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase.from('bot_pairings').insert({
-    user_id: req.userId,
-    pairing_code: code,
-    status: 'pending',
-    expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 min
-  }).select().single();
-
-  if (error) return res.status(500).json({ error: error.message });
+  db.prepare('INSERT INTO bot_pairings (id, user_id, pairing_code, status, expires_at) VALUES (?, ?, ?, ?, ?)')
+    .run(id, req.userId, code, 'pending', expiresAt);
 
   res.json({
     code,
     expires_in: 600,
-    message: 'Gib diesen Code deinem ClawdBot: "pair ' + code + '"',
+    message: `Give this code to your ClawdBot: "pair ${code}"`,
   });
 });
 
 // ─── Step 2: Bot claims the pairing code (public endpoint) ───
-pairingRouter.post('/claim', async (req, res) => {
+pairingRouter.post('/claim', (req, res) => {
   const { code, bot_name } = req.body;
-  if (!code) return res.status(400).json({ error: 'Pairing code required' });
+  if (!code || typeof code !== 'string' || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({ error: 'Valid 6-digit pairing code required' });
+  }
 
-  // Find valid pending pairing
-  const { data: pairing, error } = await supabase
-    .from('bot_pairings')
-    .select('*')
-    .eq('pairing_code', code)
-    .eq('status', 'pending')
-    .gt('expires_at', new Date().toISOString())
-    .single();
+  const pairing = db.prepare(
+    "SELECT * FROM bot_pairings WHERE pairing_code = ? AND status = 'pending' AND expires_at > datetime('now')"
+  ).get(code);
 
-  if (error || !pairing) {
+  if (!pairing) {
     return res.status(404).json({ error: 'Invalid or expired pairing code' });
   }
 
@@ -63,65 +54,43 @@ pairingRouter.post('/claim', async (req, res) => {
   const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
   // Activate pairing
-  const { error: updateErr } = await supabase
-    .from('bot_pairings')
-    .update({
-      status: 'active',
-      bot_token_hash: tokenHash,
-      bot_name: bot_name || 'ClawdBot',
-      paired_at: new Date().toISOString(),
-    })
-    .eq('id', pairing.id);
-
-  if (updateErr) return res.status(500).json({ error: updateErr.message });
+  db.prepare(
+    "UPDATE bot_pairings SET status = 'active', bot_token_hash = ?, bot_name = ?, paired_at = datetime('now') WHERE id = ?"
+  ).run(tokenHash, bot_name || 'ClawdBot', pairing.id);
 
   // Audit
-  await supabase.from('audit_log').insert({
-    user_id: pairing.user_id,
-    actor: 'bot',
-    action: 'Bot paired',
-    target_type: 'pairing',
-    target_id: pairing.id,
-    details: { bot_name: bot_name || 'ClawdBot' },
-  });
+  db.prepare("INSERT INTO audit_log (id, user_id, actor, action, target, details) VALUES (?, ?, 'bot', 'Bot paired', ?, ?)")
+    .run(uuid(), pairing.user_id, pairing.id, JSON.stringify({ bot_name: bot_name || 'ClawdBot' }));
 
   res.json({
     bot_token: rawToken,
     user_id: pairing.user_id,
-    scopes: pairing.scopes,
+    scopes: JSON.parse(pairing.scopes),
     message: 'Pairing successful! Store this token securely — it cannot be shown again.',
   });
 });
 
 // ─── List active pairings ───
-pairingRouter.get('/', authMiddleware, async (req, res) => {
-  const { data } = await supabase
-    .from('bot_pairings')
-    .select('id, bot_name, scopes, status, paired_at, created_at')
-    .eq('user_id', req.userId)
-    .in('status', ['active', 'pending'])
-    .order('created_at', { ascending: false });
+pairingRouter.get('/', authMiddleware, (req, res) => {
+  const pairings = db.prepare(
+    "SELECT id, bot_name, scopes, status, paired_at, created_at FROM bot_pairings WHERE user_id = ? AND status IN ('active', 'pending') ORDER BY created_at DESC"
+  ).all(req.userId);
 
-  res.json({ pairings: data || [] });
+  res.json({
+    pairings: pairings.map(p => ({ ...p, scopes: JSON.parse(p.scopes || '[]') })),
+  });
 });
 
 // ─── Revoke a pairing ───
-pairingRouter.delete('/:id', authMiddleware, async (req, res) => {
-  const { error } = await supabase
-    .from('bot_pairings')
-    .update({ status: 'revoked' })
-    .eq('id', req.params.id)
-    .eq('user_id', req.userId);
+pairingRouter.delete('/:id', authMiddleware, (req, res) => {
+  const result = db.prepare(
+    "UPDATE bot_pairings SET status = 'revoked' WHERE id = ? AND user_id = ?"
+  ).run(req.params.id, req.userId);
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (result.changes === 0) return res.status(404).json({ error: 'Pairing not found' });
 
-  await supabase.from('audit_log').insert({
-    user_id: req.userId,
-    actor: 'user',
-    action: 'Bot pairing revoked',
-    target_type: 'pairing',
-    target_id: req.params.id,
-  });
+  db.prepare("INSERT INTO audit_log (id, user_id, actor, action, target) VALUES (?, ?, 'user', 'Bot pairing revoked', ?)")
+    .run(uuid(), req.userId, req.params.id);
 
   res.json({ ok: true });
 });

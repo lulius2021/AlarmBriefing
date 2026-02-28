@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import db from '../db.js';
+import { validateAlarmBody, validateBriefingBody, stripHtml } from '../middleware/validate.js';
 
 export const botRouter = Router();
 
@@ -31,7 +32,7 @@ botRouter.get('/alarms', (req, res) => {
 });
 
 // Create alarm
-botRouter.post('/alarms', (req, res) => {
+botRouter.post('/alarms', validateAlarmBody, (req, res) => {
   if (!checkScope(req, 'alarms:write')) return res.status(403).json({ error: 'Scope alarms:write required' });
 
   const count = db.prepare('SELECT COUNT(*) as cnt FROM alarms WHERE user_id = ?').get(req.userId);
@@ -50,7 +51,7 @@ botRouter.post('/alarms', (req, res) => {
 });
 
 // Update alarm (bot-managed only)
-botRouter.patch('/alarms/:id', (req, res) => {
+botRouter.patch('/alarms/:id', validateAlarmBody, (req, res) => {
   if (!checkScope(req, 'alarms:write')) return res.status(403).json({ error: 'Scope alarms:write required' });
 
   const existing = db.prepare('SELECT * FROM alarms WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
@@ -92,7 +93,7 @@ botRouter.delete('/alarms/:id', (req, res) => {
 });
 
 // Generate briefing
-botRouter.post('/briefings/generate', (req, res) => {
+botRouter.post('/briefings/generate', validateBriefingBody, (req, res) => {
   if (!checkScope(req, 'briefings:write')) return res.status(403).json({ error: 'Scope briefings:write required' });
 
   const { alarmId, modules, content } = req.body;

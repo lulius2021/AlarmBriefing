@@ -191,7 +191,7 @@
       <div class="na-icon">⏰</div>
       <div><div class="na-time" id="na-time"></div><div class="na-label" id="na-label"></div><div class="na-brief" id="na-brief"></div></div>
     </div>
-    <div class="briefing-player" id="bp"><div class="bp-play" onclick="togglePlay()">▶</div><div class="bp-info"><div class="bp-title">Morgenbriefing</div><div class="bp-sub">Wetter, Termine, News</div></div><div class="bp-wave" id="bp-wave" style="display:none"><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div></div></div>
+    <div class="briefing-player" id="bp"><div class="bp-play" onclick="togglePlay()">▶</div><div class="bp-info"><div class="bp-title" id="bp-title"></div><div class="bp-sub" id="bp-sub"></div></div><div class="bp-wave" id="bp-wave" style="display:none"><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div><div class="bp-bar"></div></div></div>
     <div class="alarm-list" id="alarm-list"></div>
     <div class="fab" onclick="openModal()">+</div>
   </div>
@@ -199,65 +199,11 @@
   <!-- SETTINGS -->
   <div class="screen" id="s-settings">
     <div class="settings-header">
-      <span class="back-link" onclick="showScreen('home')">← Zurück</span>
-      <span style="font-weight:600;font-size:15px">Einstellungen</span>
+      <span class="back-link" onclick="showScreen('home')" id="settings-back"></span>
+      <span style="font-weight:600;font-size:15px" id="settings-title"></span>
       <span style="width:50px"></span>
     </div>
-    <div class="settings-body">
-      <div class="s-title">Bot-Verbindung</div>
-      <div class="s-card">
-        <div class="s-explain">
-          <b>So verbindest du deinen Bot:</b><br>
-          1. Klicke "Neuen Key generieren"<br>
-          2. Kopiere den API-Key<br>
-          3. Setze ihn in deinem Clawdbot als <b>ALARMBRIEFING_API_KEY</b><br>
-          4. Der Bot kann dann Wecker erstellen, Briefings generieren und ueber deine Lautsprecher abspielen.
-        </div>
-        <div class="s-row"><div style="display:flex;align-items:center;gap:6px"><div class="conn-dot off" id="conn-dot"></div><span id="conn-label" style="font-size:12px">Kein Bot verbunden</span></div></div>
-        <div class="api-key-box" id="api-key-box" onclick="copyKey()" style="display:none"></div>
-        <div style="padding:8px 14px 10px;display:flex;gap:6px">
-          <button class="btn btn-sm btn-blue btn-flex" onclick="genBotKey()">🔑 Neuen Key generieren</button>
-          <button class="btn btn-sm btn-flex" id="copy-btn" onclick="copyKey()" style="display:none">📋 Kopieren</button>
-        </div>
-      </div>
-
-      <div class="s-title">Briefing-Quellen</div>
-      <div class="s-card">
-        <div class="s-explain">Dein Bot sammelt diese Daten und erstellt daraus ein Audio-Briefing das beim Alarm abgespielt wird — wie Jarvis.</div>
-        <div class="s-row"><span>🌤 Wetter</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="s-row"><span>📅 Kalender</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="s-row"><span>📰 Nachrichten</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="s-row"><span>✅ Aufgaben</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
-      </div>
-
-      <div class="s-title">Audio</div>
-      <div class="s-card">
-        <div class="s-explain">Stimme und Tempo fuer dein Audio-Briefing ueber die Lautsprecher.</div>
-        <div class="s-row"><span>Stimme</span><span class="s-dim">Jarvis</span></div>
-        <div class="s-row"><span>Tempo</span><span class="s-dim">1.0x</span></div>
-      </div>
-
-      <div class="s-title">Account</div>
-      <div class="s-card">
-        <div class="s-row"><span>Email</span><span class="s-dim" id="s-email">-</span></div>
-        <div class="s-row" style="cursor:pointer" onclick="exportData()"><span>📦 Daten exportieren</span><span class="s-dim">→</span></div>
-        <div class="s-row" style="cursor:pointer" onclick="logout()"><span>🚪 Abmelden</span><span class="s-dim">→</span></div>
-        <div class="s-row danger" style="cursor:pointer" onclick="deleteAccount()"><span>🗑 Account loeschen</span><span class="s-dim">→</span></div>
-      </div>
-
-      <div class="s-title">Rechtliches</div>
-      <div class="s-card">
-        <a href="/privacy.html" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>Datenschutzerklaerung</span><span class="s-dim">→</span></div></a>
-        <a href="/terms.html" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>Nutzungsbedingungen</span><span class="s-dim">→</span></div></a>
-        <a href="/imprint.html" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>Impressum</span><span class="s-dim">→</span></div></a>
-        <a href="/support.html" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>Support & Hilfe</span><span class="s-dim">→</span></div></a>
-      </div>
-
-      <div class="s-title">Bot-Aktivitäten</div>
-      <div class="s-card" id="audit-log"><div class="s-row"><span class="s-dim">Noch keine Aktivitaeten</span></div></div>
-
-      <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text-muted)">AlarmBriefing v1.0.0</div>
-    </div>
+    <div class="settings-body" id="settings-body"></div>
   </div>
 
   <!-- ALARM OVERLAY (when alarm triggers) -->
@@ -267,10 +213,10 @@
       <div id="alarm-overlay-time" style="font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:700;color:var(--blue-light)">07:00</div>
       <div id="alarm-overlay-name" style="font-size:16px;color:var(--text-dim);margin:8px 0 24px">Morgenwecker</div>
       <div style="display:flex;gap:12px;justify-content:center">
-        <button class="btn" onclick="snoozeAlarm()" style="min-width:120px">😴 Snooze</button>
-        <button class="btn btn-blue" onclick="dismissAlarm()" style="min-width:120px">✅ Aufstehen</button>
+        <button class="btn" onclick="snoozeAlarm()" style="min-width:120px" id="alarm-snooze-btn"></button>
+        <button class="btn btn-blue" onclick="dismissAlarm()" style="min-width:120px" id="alarm-dismiss-btn"></button>
       </div>
-      <div style="margin-top:16px;font-size:12px;color:var(--text-muted)" id="alarm-overlay-status">🎙 Briefing wird nach dem Alarm vorgelesen...</div>
+      <div style="margin-top:16px;font-size:12px;color:var(--text-muted)" id="alarm-overlay-status"></div>
     </div>
   </div>
   <style>
@@ -281,16 +227,16 @@
   <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
     <div class="modal">
       <div class="modal-bar"></div>
-      <div class="modal-head"><span class="modal-title">Neuer Wecker</span><span class="modal-close" onclick="closeModal()">Fertig</span></div>
+      <div class="modal-head"><span class="modal-title" id="modal-title"></span><span class="modal-close" onclick="closeModal()" id="modal-done"></span></div>
       <div class="modal-body">
         <div class="time-input"><input class="time-field" id="m-h" value="07" maxlength="2"><span class="time-colon">:</span><input class="time-field" id="m-m" value="00" maxlength="2"></div>
-        <div class="field"><div class="field-label">Name</div><input class="input" id="m-name" placeholder="z.B. Morgenwecker"></div>
-        <div class="field"><div class="field-label">Wochentage</div><div class="days-row" id="m-days"></div></div>
+        <div class="field"><div class="field-label" id="m-name-label"></div><input class="input" id="m-name"></div>
+        <div class="field"><div class="field-label" id="m-days-label"></div><div class="days-row" id="m-days"></div></div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px">
-          <div style="font-size:11px;color:var(--blue);font-weight:600;margin-bottom:3px">🤖 Briefing</div>
-          <div style="font-size:11px;color:var(--text-dim);line-height:1.4">Dein Clawdbot entscheidet automatisch was ins Briefing kommt — Wetter, Kalender, News etc. Du musst nichts einstellen.</div>
+          <div style="font-size:11px;color:var(--blue);font-weight:600;margin-bottom:3px" id="m-briefing-title"></div>
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.4" id="m-briefing-desc"></div>
         </div>
-        <button class="btn btn-blue btn-full" onclick="saveAlarm()">Speichern</button>
+        <button class="btn btn-blue btn-full" onclick="saveAlarm()" id="m-save-btn"></button>
       </div>
     </div>
   </div>
@@ -434,6 +380,25 @@ function initI18nUI() {
   document.getElementById('auth-pass').placeholder = L.passPlaceholder;
   document.getElementById('auth-btn').textContent = L.register;
   document.getElementById('auth-switch').innerHTML = L.switchToLogin;
+  // Home
+  document.getElementById('bp-title').textContent = L.morningBriefing;
+  document.getElementById('bp-sub').textContent = L.briefingSources;
+  // Modal
+  document.getElementById('modal-title').textContent = L.newAlarm;
+  document.getElementById('modal-done').textContent = L.done;
+  document.getElementById('m-name-label').textContent = L.name;
+  document.getElementById('m-name').placeholder = L.namePlaceholderAlarm;
+  document.getElementById('m-days-label').textContent = L.weekdays;
+  document.getElementById('m-briefing-title').textContent = L.briefingTitle;
+  document.getElementById('m-briefing-desc').textContent = L.briefingDesc;
+  document.getElementById('m-save-btn').textContent = L.save;
+  // Alarm overlay
+  document.getElementById('alarm-snooze-btn').textContent = L.snooze;
+  document.getElementById('alarm-dismiss-btn').textContent = L.dismiss;
+  document.getElementById('alarm-overlay-status').textContent = L.briefingAfter;
+  // Settings header
+  document.getElementById('settings-back').textContent = L.back;
+  document.getElementById('settings-title').textContent = L.settings;
 }
 
 async function doAuth() {
@@ -571,14 +536,54 @@ function togglePlay(){
 
 // === SETTINGS ===
 function renderSettings() {
-  document.getElementById('s-email').textContent=user?.email||'-';
-  if(currentBotKey){
-    document.getElementById('api-key-box').textContent=currentBotKey;
-    document.getElementById('api-key-box').style.display='';
-    document.getElementById('copy-btn').style.display='';
-    document.getElementById('conn-dot').className='conn-dot on';
-    document.getElementById('conn-label').textContent='Key generiert';
-  }
+  const privacyUrl = LANG==='de'?'/privacy.html':'/privacy-en.html';
+  const termsUrl = LANG==='de'?'/terms.html':'/terms-en.html';
+  const imprintUrl = LANG==='de'?'/imprint.html':'/imprint-en.html';
+  const supportUrl = LANG==='de'?'/support.html':'/support-en.html';
+
+  document.getElementById('settings-body').innerHTML = `
+    <div class="s-title">${L.botConnection}</div>
+    <div class="s-card">
+      <div class="s-explain">${L.botExplain}</div>
+      <div class="s-row"><div style="display:flex;align-items:center;gap:6px"><div class="conn-dot ${currentBotKey?'on':'off'}" id="conn-dot"></div><span id="conn-label" style="font-size:12px">${currentBotKey?L.keyGenerated:L.noBotConnected}</span></div></div>
+      ${currentBotKey?`<div class="api-key-box" id="api-key-box" onclick="copyKey()">${currentBotKey}</div>`:''}
+      <div style="padding:8px 14px 10px;display:flex;gap:6px">
+        <button class="btn btn-sm btn-blue btn-flex" onclick="genBotKey()">${L.newKey}</button>
+        ${currentBotKey?`<button class="btn btn-sm btn-flex" id="copy-btn" onclick="copyKey()">${L.copy}</button>`:''}
+      </div>
+    </div>
+    <div class="s-title">${L.briefingSourcesTitle||L.briefingSources}</div>
+    <div class="s-card">
+      <div class="s-explain">${L.briefingSourcesDesc}</div>
+      <div class="s-row"><span>${L.weather}</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="s-row"><span>${L.calendar}</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="s-row"><span>${L.news}</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="s-row"><span>${L.tasks}</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+    <div class="s-title">${L.audioTitle}</div>
+    <div class="s-card">
+      <div class="s-explain">${L.audioDesc}</div>
+      <div class="s-row"><span>${L.voice}</span><span class="s-dim">Jarvis</span></div>
+      <div class="s-row"><span>${L.speed}</span><span class="s-dim">1.0x</span></div>
+    </div>
+    <div class="s-title">${L.account}</div>
+    <div class="s-card">
+      <div class="s-row"><span>${L.email}</span><span class="s-dim">${user?.email||'-'}</span></div>
+      <div class="s-row" style="cursor:pointer" onclick="exportData()"><span>${L.exportData}</span><span class="s-dim">→</span></div>
+      <div class="s-row" style="cursor:pointer" onclick="logout()"><span>${L.logout}</span><span class="s-dim">→</span></div>
+      <div class="s-row danger" style="cursor:pointer" onclick="deleteAccount()"><span>${L.deleteAccount}</span><span class="s-dim">→</span></div>
+    </div>
+    <div class="s-title">${L.legal}</div>
+    <div class="s-card">
+      <a href="${privacyUrl}" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>${L.privacy}</span><span class="s-dim">→</span></div></a>
+      <a href="${termsUrl}" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>${L.terms}</span><span class="s-dim">→</span></div></a>
+      <a href="${imprintUrl}" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>${L.imprint}</span><span class="s-dim">→</span></div></a>
+      <a href="${supportUrl}" style="text-decoration:none;color:var(--text)"><div class="s-row" style="cursor:pointer"><span>${L.support}</span><span class="s-dim">→</span></div></a>
+    </div>
+    <div class="s-title">${L.botActivity}</div>
+    <div class="s-card" id="audit-log"><div class="s-row"><span class="s-dim">${L.noActivity}</span></div></div>
+    <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text-muted)">AlarmBriefing v1.0.0</div>
+  `;
 }
 
 async function genBotKey() {

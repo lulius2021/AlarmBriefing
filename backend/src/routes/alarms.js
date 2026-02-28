@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import db from '../db.js';
+import { validateAlarmBody } from '../middleware/validate.js';
 
 export const alarmRouter = Router();
+alarmRouter.use(validateAlarmBody);
 
 function rowToAlarm(row) {
   return {

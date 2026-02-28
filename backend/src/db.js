@@ -95,6 +95,21 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS bot_pairings (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    pairing_code TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    bot_token_hash TEXT,
+    bot_name TEXT DEFAULT 'ClawdBot',
+    scopes TEXT DEFAULT '["alarms:read","alarms:write","briefings:write","settings:read"]',
+    expires_at TEXT NOT NULL,
+    paired_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_pairings_code ON bot_pairings(pairing_code);
+  CREATE INDEX IF NOT EXISTS idx_pairings_user ON bot_pairings(user_id);
   CREATE INDEX IF NOT EXISTS idx_alarms_user ON alarms(user_id);
   CREATE INDEX IF NOT EXISTS idx_briefings_user ON briefings(user_id);
   CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id);
