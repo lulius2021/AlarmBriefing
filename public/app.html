@@ -177,6 +177,7 @@
 
   <!-- HOME -->
   <div class="screen" id="s-home">
+    <div id="offline-bar" style="display:none;background:#ef4444;color:white;text-align:center;padding:6px;font-size:12px;font-weight:600">Offline — Alarme funktionieren weiterhin lokal</div>
     <div class="home-header">
       <div>
         <div class="home-title">Alarm<span>Briefing</span></div>
@@ -617,13 +618,15 @@ function openModal(){
 function closeModal(){document.getElementById('modal').classList.remove('active')}
 function renderDays(){document.getElementById('m-days').innerHTML=DAYS.map((l,i)=>`<div class="day-btn ${editDays.includes(i)?'active':''}" onclick="editDays.includes(${i})?editDays=editDays.filter(x=>x!==${i}):editDays.push(${i});renderDays()">${l}</div>`).join('')}
 async function saveAlarm(){
-  const h=document.getElementById('m-h').value.padStart(2,'0');
-  const m=document.getElementById('m-m').value.padStart(2,'0');
-  const name=document.getElementById('m-name').value||'Alarm';
+  const h=parseInt(document.getElementById('m-h').value);
+  const m=parseInt(document.getElementById('m-m').value);
+  const name=(document.getElementById('m-name').value||'Alarm').slice(0,100).replace(/[<>]/g,'');
+  if(isNaN(h)||isNaN(m)||h<0||h>23||m<0||m>59){alert('Bitte gueltige Uhrzeit eingeben (0-23:0-59)');return;}
+  const time=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
   try{
-    await api('/api/alarms',{method:'POST',body:JSON.stringify({name,time:`${h}:${m}`,days:editDays,briefingMode:'standard'})});
+    await api('/api/alarms',{method:'POST',body:JSON.stringify({name,time,days:editDays,briefingMode:'standard'})});
     closeModal();loadAlarms();
-  }catch(e){alert(e.message)}
+  }catch(e){alert(e.message||'Alarm konnte nicht erstellt werden')}
 }
 
 // === TTS ENGINE ===
@@ -770,13 +773,36 @@ function dismissAlarm() {
 function snoozeAlarm() {
   document.getElementById('alarm-overlay').classList.remove('active');
   tts.stop();
-  // Snooze: re-trigger in 5 min
+  // Snooze: store in localStorage so it survives reload
+  const snoozeAt = Date.now() + 5 * 60 * 1000;
+  localStorage.setItem('ab_snooze', snoozeAt.toString());
   setTimeout(() => {
+    localStorage.removeItem('ab_snooze');
     const now = new Date();
     const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
     triggerAlarm({ name: 'Snooze', time: hhmm });
   }, 5 * 60 * 1000);
 }
+
+// Check for pending snooze on load
+(function checkPendingSnooze() {
+  const s = localStorage.getItem('ab_snooze');
+  if (!s) return;
+  const remaining = parseInt(s) - Date.now();
+  if (remaining <= 0) {
+    localStorage.removeItem('ab_snooze');
+    const now = new Date();
+    const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    triggerAlarm({ name: 'Snooze', time: hhmm });
+  } else {
+    setTimeout(() => {
+      localStorage.removeItem('ab_snooze');
+      const now = new Date();
+      const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+      triggerAlarm({ name: 'Snooze', time: hhmm });
+    }, remaining);
+  }
+})();
 
 // Check alarms every 10 seconds
 setInterval(checkAlarms, 10000);
@@ -802,6 +828,14 @@ function exportData(){
   const a=document.createElement('a');a.href=url;a.download='alarmbriefing-export.json';a.click();
   URL.revokeObjectURL(url);
 }
+
+// === OFFLINE DETECTION ===
+function updateOnlineStatus() {
+  document.getElementById('offline-bar').style.display = navigator.onLine ? 'none' : 'block';
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
 
 // === INIT ===
 initI18nUI();
