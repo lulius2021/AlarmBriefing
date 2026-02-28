@@ -24,6 +24,13 @@
         "NSUserNotificationsUsageDescription": "AlarmBriefing needs notifications to wake you up with alarms and briefings."
       }
     },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0e1a"
+      },
+      "package": "com.juliusdeusch.alarmbriefing"
+    },
     "locales": {
       "de": "./locales/de.json",
       "en": "./locales/en.json"
@@ -39,10 +46,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://alarm-briefing.vercel.app",
-      "eas": {
-        "projectId": "alarmbriefing"
-      }
+      "apiUrl": "https://alarm-briefing.vercel.app"
     }
   }
 }
