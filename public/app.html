@@ -720,17 +720,30 @@ function checkAlarms() {
   }
 }
 
-function triggerAlarm(alarm) {
+async function triggerAlarm(alarm) {
   // Show alarm screen
   document.getElementById('alarm-overlay').classList.add('active');
   document.getElementById('alarm-overlay-name').textContent = alarm.name;
   document.getElementById('alarm-overlay-time').textContent = alarm.time;
-  
+  document.getElementById('alarm-overlay-status').textContent = '🎙 Briefing wird geladen...';
+
+  // Fetch the absolute latest briefing right now
+  try {
+    const d = await api('/api/briefings/latest');
+    if (d.briefing && (d.briefing.content_text || d.briefing.content)) {
+      latestBriefingText = d.briefing.content_text || d.briefing.content;
+      document.getElementById('alarm-overlay-status').textContent = '🎙 Briefing bereit';
+    }
+  } catch(e) { /* use cached briefing */ }
+
   // Play alarm sound, then briefing
   playAlarmSound(() => {
     // After alarm sound, speak the briefing
     if (latestBriefingText) {
+      document.getElementById('alarm-overlay-status').textContent = '🎙 Briefing wird vorgelesen...';
       tts.speak(latestBriefingText);
+    } else {
+      document.getElementById('alarm-overlay-status').textContent = 'Kein Briefing vorhanden';
     }
   });
 }
