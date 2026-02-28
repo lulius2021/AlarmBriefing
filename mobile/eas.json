@@ -22,14 +22,12 @@
         "buildConfiguration": "Release",
         "autoIncrement": true
       },
-      "autoSubmit": false
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "appleId": "julius.deusch@trainq.app",
-        "ascAppId": "",
+        "appleId": "julius15deu@gmail.com",
         "appleTeamId": "HN96DP7ZYB"
       }
     }
