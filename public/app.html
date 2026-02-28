@@ -486,8 +486,9 @@ function showScreen(id) {
 
 // === HOME ===
 function normalizeAlarm(a){
-  return {id:a.id, name:a.name, active:a.active, time:a.time, days:a.days||[],
-    managedBy:a.managed_by||a.managedBy||'manual', briefingMode:a.briefing_mode||a.briefingMode||'auto',
+  const t = (a.time||'07:00').substring(0,5); // "07:30:00" -> "07:30"
+  return {id:a.id, name:a.name, active:a.active, time:t, days:a.days||[],
+    managedBy:a.managed_by||a.managedBy||'manual', briefingMode:a.briefing_mode||a.briefingMode||'standard',
     userId:a.user_id||a.userId};
 }
 async function loadAlarms() {
@@ -620,7 +621,7 @@ async function saveAlarm(){
   const m=document.getElementById('m-m').value.padStart(2,'0');
   const name=document.getElementById('m-name').value||'Alarm';
   try{
-    await api('/api/alarms',{method:'POST',body:JSON.stringify({name,time:`${h}:${m}`,days:editDays,briefingMode:'auto'})});
+    await api('/api/alarms',{method:'POST',body:JSON.stringify({name,time:`${h}:${m}`,days:editDays,briefingMode:'standard'})});
     closeModal();loadAlarms();
   }catch(e){alert(e.message)}
 }
@@ -690,8 +691,8 @@ let latestBriefingText = 'Guten Morgen! Dein Briefing wird geladen...';
 async function loadLatestBriefing() {
   try {
     const d = await api('/api/briefings/latest');
-    if (d.briefing && d.briefing.content) {
-      latestBriefingText = d.briefing.content;
+    if (d.briefing && (d.briefing.content_text || d.briefing.content)) {
+      latestBriefingText = d.briefing.content_text || d.briefing.content;
       const bp = document.getElementById('bp');
       bp.classList.add('active');
       document.querySelector('.bp-sub').textContent = 
@@ -708,7 +709,9 @@ function checkAlarms() {
   if (hhmm === lastAlarmCheck) return; // only check once per minute
   lastAlarmCheck = hhmm;
   
-  const triggered = alarms.find(a => a.active && a.time === hhmm && (a.days.length === 0 || a.days.includes(day)));
+  // day: JS getDay() = 0=Sun,1=Mon..6=Sat; DB uses same mapping
+  // Also check day===7 as alias for Sunday (0) for safety
+  const triggered = alarms.find(a => a.active && a.time === hhmm && (a.days.length === 0 || a.days.includes(day) || (day === 0 && a.days.includes(7))));
   if (triggered) {
     triggerAlarm(triggered);
   }
