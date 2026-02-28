@@ -3,7 +3,14 @@
  * Detects iOS/Android system language via expo-localization.
  * Falls back to 'en' if language is not supported.
  */
-import { getLocales } from 'expo-localization';
+// Dynamic import — expo-localization only available in React Native
+let getLocales: (() => Array<{ languageCode: string }>) | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  getLocales = require('expo-localization').getLocales;
+} catch {
+  // Not in Expo environment (web/Next.js) — will use browser detection
+}
 
 type TranslationKey = keyof typeof de;
 
@@ -287,8 +294,15 @@ let currentLang = 'en';
 
 export function initI18n() {
   try {
-    const locales = getLocales();
-    const lang = locales?.[0]?.languageCode || 'en';
+    let lang = 'en';
+    if (getLocales) {
+      // React Native / Expo
+      const locales = getLocales();
+      lang = locales?.[0]?.languageCode || 'en';
+    } else if (typeof navigator !== 'undefined') {
+      // Browser
+      lang = (navigator.language || 'en').slice(0, 2);
+    }
     currentLang = translations[lang] ? lang : 'en';
   } catch {
     currentLang = 'en';
