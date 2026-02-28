@@ -1,41 +1,25 @@
 import crypto from 'crypto';
-import { supabase } from '../lib/supabase.js';
+import db from '../db.js';
+import { v4 as uuid } from 'uuid';
 
-/**
- * Authenticate bot via X-Bot-Token header.
- * The token is hashed and looked up in bot_pairings.
- * Sets req.userId, req.botScopes, req.botPairingId.
- */
-export async function botAuthMiddleware(req, res, next) {
-  const token = req.headers['x-bot-token'];
-  if (!token) return res.status(401).json({ error: 'No bot token. Send X-Bot-Token header.' });
+export function botAuthMiddleware(req, res, next) {
+  const key = req.headers['x-bot-key'];
+  if (!key) return res.status(401).json({ error: 'No bot key provided' });
 
-  const hash = crypto.createHash('sha256').update(token).digest('hex');
+  const hash = crypto.createHash('sha256').update(key).digest('hex');
+  const bot = db.prepare('SELECT * FROM bot_keys WHERE key_hash = ?').get(hash);
+  if (!bot) return res.status(401).json({ error: 'Invalid bot key' });
 
-  const { data: pairing, error } = await supabase
-    .from('bot_pairings')
-    .select('*')
-    .eq('bot_token_hash', hash)
-    .eq('status', 'active')
-    .single();
+  req.userId = bot.user_id;
+  req.botScopes = JSON.parse(bot.scopes || '[]');
+  req.botKeyHash = hash;
 
-  if (error || !pairing) {
-    return res.status(401).json({ error: 'Invalid or revoked bot token' });
-  }
+  // Update last_used
+  db.prepare('UPDATE bot_keys SET last_used = datetime("now") WHERE key_hash = ?').run(hash);
 
-  req.userId = pairing.user_id;
-  req.botScopes = pairing.scopes;
-  req.botPairingId = pairing.id;
-
-  // Audit log (fire-and-forget)
-  supabase.from('audit_log').insert({
-    user_id: pairing.user_id,
-    actor: 'bot',
-    action: `${req.method} ${req.path}`,
-    target_type: req.params?.id ? 'alarm' : null,
-    target_id: req.params?.id || null,
-    details: { body: JSON.stringify(req.body || {}).slice(0, 500) },
-  }).then(() => {});
+  // Audit log
+  db.prepare(`INSERT INTO audit_log (id, user_id, actor, action, target, details) VALUES (?, ?, 'bot', ?, ?, ?)`)
+    .run(uuid(), bot.user_id, `${req.method} ${req.path}`, req.body?.alarmId || req.params?.id || '-', JSON.stringify(req.body || {}).slice(0, 500));
 
   next();
 }

@@ -1,0 +1,15 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/alarms/route": "app/api/alarms/route.js",
+  "/api/auth/bot-key/route": "app/api/auth/bot-key/route.js",
+  "/api/auth/delete/route": "app/api/auth/delete/route.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/bot/alarms/route": "app/api/bot/alarms/route.js",
+  "/api/bot/briefings/route": "app/api/bot/briefings/route.js",
+  "/api/bot/ping/route": "app/api/bot/ping/route.js",
+  "/api/bot/settings/route": "app/api/bot/settings/route.js",
+  "/api/briefings/latest/route": "app/api/briefings/latest/route.js",
+  "/api/health/route": "app/api/health/route.js",
+  "/page": "app/page.js"
+}

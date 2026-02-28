@@ -1,121 +1,191 @@
 import { Router } from 'express';
-import { supabase } from '../lib/supabase.js';
-import { authMiddleware } from '../middleware/auth.js';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import { v4 as uuid } from 'uuid';
+import db from '../db.js';
+import { signToken, signRefreshToken, verifyRefreshToken, authMiddleware } from '../middleware/auth.js';
 
 export const authRouter = Router();
 
-// ─── Email/Password Register ───
+// Register with email
 authRouter.post('/register', async (req, res) => {
   const { email, password, name } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
-  const { data, error } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: name || email.split('@')[0] },
-  });
+  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  if (existing) return res.status(409).json({ error: 'Email already registered' });
 
-  if (error) return res.status(400).json({ error: error.message });
+  const id = uuid();
+  const hashed = await bcrypt.hash(password, 12);
+  db.prepare('INSERT INTO users (id, email, name, password, auth_providers) VALUES (?, ?, ?, ?, ?)')
+    .run(id, email.toLowerCase().trim(), name || null, hashed, JSON.stringify(['email']));
 
-  // Sign in immediately
-  const { data: session, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-  if (signInErr) return res.status(500).json({ error: signInErr.message });
+  db.prepare('INSERT INTO auth_identities (id, user_id, provider, provider_id, email) VALUES (?, ?, ?, ?, ?)')
+    .run(uuid(), id, 'email', email.toLowerCase().trim(), email.toLowerCase().trim());
 
-  // Init settings
-  await supabase.from('user_settings').upsert({ user_id: data.user.id });
-
-  res.json({
-    token: session.session.access_token,
-    refresh_token: session.session.refresh_token,
-    user: { id: data.user.id, email, name },
-  });
+  const token = signToken(id);
+  const refreshToken = signRefreshToken(id);
+  res.status(201).json({ token, refreshToken, user: { id, email, name, authProviders: ['email'] } });
 });
 
-// ─── Email/Password Login ───
+// Login with email
 authRouter.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return res.status(401).json({ error: 'Invalid credentials' });
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase().trim());
+  if (!user || !user.password) return res.status(401).json({ error: 'Invalid credentials' });
 
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const token = signToken(user.id);
+  const refreshToken = signRefreshToken(user.id);
+  res.json({ token, refreshToken, user: { id: user.id, email: user.email, name: user.name, authProviders: JSON.parse(user.auth_providers) } });
+});
+
+// Social login / link
+authRouter.post('/social', async (req, res) => {
+  const { provider, providerId, email, name } = req.body;
+  if (!provider || !providerId) return res.status(400).json({ error: 'Provider and providerId required' });
+
+  // Check if identity already exists
+  const existing = db.prepare('SELECT * FROM auth_identities WHERE provider = ? AND provider_id = ?').get(provider, providerId);
+
+  if (existing) {
+    // Login
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(existing.user_id);
+    const token = signToken(user.id);
+    const refreshToken = signRefreshToken(user.id);
+    return res.json({ token, refreshToken, user: { id: user.id, email: user.email, name: user.name, authProviders: JSON.parse(user.auth_providers) } });
+  }
+
+  // Check if email matches existing user → link account
+  let userId;
+  if (email) {
+    const userByEmail = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase().trim());
+    if (userByEmail) {
+      userId = userByEmail.id;
+      const providers = JSON.parse(userByEmail.auth_providers);
+      if (!providers.includes(provider)) {
+        providers.push(provider);
+        db.prepare('UPDATE users SET auth_providers = ?, updated_at = datetime("now") WHERE id = ?')
+          .run(JSON.stringify(providers), userId);
+      }
+    }
+  }
+
+  // New user
+  if (!userId) {
+    userId = uuid();
+    db.prepare('INSERT INTO users (id, email, name, auth_providers) VALUES (?, ?, ?, ?)')
+      .run(userId, email?.toLowerCase().trim() || null, name || null, JSON.stringify([provider]));
+  }
+
+  // Create identity link
+  db.prepare('INSERT INTO auth_identities (id, user_id, provider, provider_id, email) VALUES (?, ?, ?, ?, ?)')
+    .run(uuid(), userId, provider, providerId, email?.toLowerCase().trim() || null);
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  const token = signToken(userId);
+  const refreshToken = signRefreshToken(userId);
+  res.status(201).json({ token, refreshToken, user: { id: user.id, email: user.email, name: user.name, authProviders: JSON.parse(user.auth_providers) } });
+});
+
+// Link additional provider to existing account
+authRouter.post('/link', authMiddleware, async (req, res) => {
+  const { provider, providerId, email } = req.body;
+  if (!provider || !providerId) return res.status(400).json({ error: 'Provider and providerId required' });
+
+  const existing = db.prepare('SELECT * FROM auth_identities WHERE provider = ? AND provider_id = ?').get(provider, providerId);
+  if (existing) {
+    if (existing.user_id === req.userId) return res.json({ ok: true, message: 'Already linked' });
+    return res.status(409).json({ error: 'This identity is linked to another account' });
+  }
+
+  db.prepare('INSERT INTO auth_identities (id, user_id, provider, provider_id, email) VALUES (?, ?, ?, ?, ?)')
+    .run(uuid(), req.userId, provider, providerId, email?.toLowerCase().trim() || null);
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
+  const providers = JSON.parse(user.auth_providers);
+  if (!providers.includes(provider)) {
+    providers.push(provider);
+    db.prepare('UPDATE users SET auth_providers = ?, updated_at = datetime("now") WHERE id = ?')
+      .run(JSON.stringify(providers), req.userId);
+  }
+
+  res.json({ ok: true, authProviders: providers });
+});
+
+// Refresh token
+authRouter.post('/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) return res.status(400).json({ error: 'Refresh token required' });
+
+  try {
+    const decoded = verifyRefreshToken(refreshToken);
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.userId);
+    if (!user) return res.status(401).json({ error: 'User not found' });
+
+    const newToken = signToken(user.id);
+    const newRefreshToken = signRefreshToken(user.id);
+    res.json({ token: newToken, refreshToken: newRefreshToken });
+  } catch {
+    return res.status(401).json({ error: 'Invalid refresh token' });
+  }
+});
+
+// Generate Bot Key
+authRouter.post('/bot-key', authMiddleware, (req, res) => {
+  const { scopes = ['alarms:read', 'alarms:write', 'briefings:write', 'settings:read'], name = 'Bot Key' } = req.body;
+  const rawKey = `ab_${crypto.randomBytes(32).toString('hex')}`;
+  const hash = crypto.createHash('sha256').update(rawKey).digest('hex');
+
+  // Max 5 keys per user
+  const count = db.prepare('SELECT COUNT(*) as cnt FROM bot_keys WHERE user_id = ?').get(req.userId);
+  if (count.cnt >= 5) return res.status(429).json({ error: 'Maximum 5 bot keys per account' });
+
+  db.prepare('INSERT INTO bot_keys (key_hash, user_id, scopes, name) VALUES (?, ?, ?, ?)')
+    .run(hash, req.userId, JSON.stringify(scopes), name);
+
+  res.status(201).json({ key: rawKey, scopes, name, note: 'Store this key securely. It cannot be shown again.' });
+});
+
+// List Bot Keys
+authRouter.get('/bot-keys', authMiddleware, (req, res) => {
+  const keys = db.prepare('SELECT key_hash, name, scopes, last_used, created_at FROM bot_keys WHERE user_id = ?').all(req.userId);
   res.json({
-    token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
-    user: { id: data.user.id, email: data.user.email },
+    keys: keys.map(k => ({
+      id: k.key_hash.slice(0, 8),
+      name: k.name,
+      scopes: JSON.parse(k.scopes),
+      lastUsed: k.last_used,
+      createdAt: k.created_at,
+    }))
   });
 });
 
-// ─── Apple Sign-In (receives Apple ID token from app) ───
-authRouter.post('/apple', async (req, res) => {
-  const { id_token, nonce } = req.body;
-  if (!id_token) return res.status(400).json({ error: 'id_token required' });
+// Revoke Bot Key
+authRouter.delete('/bot-key/:id', authMiddleware, (req, res) => {
+  const keys = db.prepare('SELECT key_hash FROM bot_keys WHERE user_id = ?').all(req.userId);
+  const key = keys.find(k => k.key_hash.startsWith(req.params.id));
+  if (!key) return res.status(404).json({ error: 'Key not found' });
 
-  const { data, error } = await supabase.auth.signInWithIdToken({
-    provider: 'apple',
-    token: id_token,
-    nonce,
-  });
-
-  if (error) return res.status(401).json({ error: error.message });
-
-  // Ensure settings exist
-  await supabase.from('user_settings').upsert({ user_id: data.user.id });
-
-  res.json({
-    token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
-    user: { id: data.user.id, email: data.user.email },
-  });
-});
-
-// ─── Google Sign-In ───
-authRouter.post('/google', async (req, res) => {
-  const { id_token, nonce } = req.body;
-  if (!id_token) return res.status(400).json({ error: 'id_token required' });
-
-  const { data, error } = await supabase.auth.signInWithIdToken({
-    provider: 'google',
-    token: id_token,
-    nonce,
-  });
-
-  if (error) return res.status(401).json({ error: error.message });
-
-  await supabase.from('user_settings').upsert({ user_id: data.user.id });
-
-  res.json({
-    token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
-    user: { id: data.user.id, email: data.user.email },
-  });
-});
-
-// ─── Refresh Token ───
-authRouter.post('/refresh', async (req, res) => {
-  const { refresh_token } = req.body;
-  if (!refresh_token) return res.status(400).json({ error: 'refresh_token required' });
-
-  const { data, error } = await supabase.auth.refreshSession({ refresh_token });
-  if (error) return res.status(401).json({ error: error.message });
-
-  res.json({
-    token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
-  });
-});
-
-// ─── Complete Onboarding ───
-authRouter.post('/onboarding-complete', authMiddleware, async (req, res) => {
-  await supabase.from('profiles').update({ onboarding_completed: true }).eq('id', req.userId);
+  db.prepare('DELETE FROM bot_keys WHERE key_hash = ?').run(key.key_hash);
   res.json({ ok: true });
 });
 
-// ─── Get Profile ───
-authRouter.get('/me', authMiddleware, async (req, res) => {
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', req.userId).single();
-  const { data: settings } = await supabase.from('user_settings').select('*').eq('user_id', req.userId).single();
+// Delete account
+authRouter.delete('/account', authMiddleware, async (req, res) => {
+  db.prepare('DELETE FROM users WHERE id = ?').run(req.userId);
+  res.json({ ok: true, message: 'Account deleted' });
+});
 
-  res.json({ profile, settings });
+// Get current user
+authRouter.get('/me', authMiddleware, (req, res) => {
+  const user = db.prepare('SELECT id, email, name, auth_providers, created_at FROM users WHERE id = ?').get(req.userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const identities = db.prepare('SELECT provider, email, created_at FROM auth_identities WHERE user_id = ?').all(req.userId);
+  res.json({ user: { ...user, authProviders: JSON.parse(user.auth_providers), identities } });
 });

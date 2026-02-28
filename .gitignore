@@ -1,5 +1,14 @@
 node_modules/
-.next/
+.expo/
+dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+backend/node_modules/
+backend/data/
 .env
-.env.local
-.env
+package-lock.json

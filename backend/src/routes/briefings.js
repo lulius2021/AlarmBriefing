@@ -1,30 +1,19 @@
 import { Router } from 'express';
-import { supabase } from '../lib/supabase.js';
+import db from '../db.js';
 
 export const briefingRouter = Router();
 
-// Get latest briefing for an alarm
-briefingRouter.get('/:alarmId/latest', async (req, res) => {
-  const { data } = await supabase
-    .from('briefings')
-    .select('*')
-    .eq('alarm_id', req.params.alarmId)
-    .eq('user_id', req.userId)
-    .order('generated_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  res.json({ briefing: data || null });
+// Get latest briefing for alarm
+briefingRouter.get('/:alarmId/latest', (req, res) => {
+  const row = db.prepare('SELECT * FROM briefings WHERE user_id = ? AND alarm_id = ? ORDER BY generated_at DESC LIMIT 1')
+    .get(req.userId, req.params.alarmId);
+  res.json({ briefing: row || null });
 });
 
 // List briefing history
-briefingRouter.get('/', async (req, res) => {
-  const { data } = await supabase
-    .from('briefings')
-    .select('*')
-    .eq('user_id', req.userId)
-    .order('generated_at', { ascending: false })
-    .limit(20);
-
-  res.json({ briefings: data || [] });
+briefingRouter.get('/', (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+  const rows = db.prepare('SELECT * FROM briefings WHERE user_id = ? ORDER BY generated_at DESC LIMIT ?')
+    .all(req.userId, limit);
+  res.json({ briefings: rows });
 });
