@@ -2,16 +2,19 @@ import jwt from 'jsonwebtoken';
 import { DB, hashKey } from './db';
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) throw new Error('FATAL: JWT_SECRET environment variable is required');
+function getJwtSecret(): string {
+  const s = process.env.JWT_SECRET;
+  if (!s) throw new Error('FATAL: JWT_SECRET environment variable is required');
+  return s;
+}
 
 export function signToken(userId: string): string {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ userId }, getJwtSecret(), { expiresIn: '30d' });
 }
 
 export function verifyToken(token: string): { userId: string } | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: string };
+    return jwt.verify(token, getJwtSecret()) as { userId: string };
   } catch {
     return null;
   }
