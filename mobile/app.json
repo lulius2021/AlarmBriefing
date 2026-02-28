@@ -13,13 +13,20 @@
       "backgroundColor": "#0a0e1a"
     },
     "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "app.alarmbriefing.ios",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.juliusdeusch.alarmbriefing",
       "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Wird nicht benötigt",
-        "UIBackgroundModes": ["audio", "fetch", "remote-notification"]
+        "UIBackgroundModes": ["audio", "fetch", "remote-notification"],
+        "NSUserNotificationsUsageDescription": "AlarmBriefing needs notifications to wake you up with alarms and briefings."
       }
+    },
+    "locales": {
+      "de": "./locales/de.json",
+      "en": "./locales/en.json"
     },
     "plugins": [
       "expo-router",
