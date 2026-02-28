@@ -41,10 +41,12 @@ export interface BotKey {
 export interface AuditEntry {
   id: string;
   user_id: string;
-  actor: 'bot' | 'user';
+  actor: 'bot' | 'user' | 'system';
   action: string;
-  target: string;
-  details: string;
+  target?: string;
+  target_type?: string;
+  target_id?: string;
+  details?: any;
   created_at: string;
 }
 
@@ -205,7 +207,11 @@ export const DB = {
   // --- Audit ---
   async addAudit(entry: AuditEntry): Promise<void> {
     if (isSupabaseConfigured()) {
-      await getSupabaseAdmin()!.from('audit_log').insert(entry);
+      const row: any = { id: entry.id, user_id: entry.user_id, actor: entry.actor, action: entry.action, created_at: entry.created_at };
+      if (entry.target) row.target_id = entry.target;
+      if (entry.target_type) row.target_type = entry.target_type;
+      if (entry.details) row.details = typeof entry.details === 'string' ? { text: entry.details } : entry.details;
+      await getSupabaseAdmin()!.from('audit_log').insert(row);
       return;
     }
     mem.auditLog.push(entry);
