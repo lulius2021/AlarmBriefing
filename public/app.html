@@ -727,14 +727,23 @@ async function triggerAlarm(alarm) {
   document.getElementById('alarm-overlay-time').textContent = alarm.time;
   document.getElementById('alarm-overlay-status').textContent = '🎙 Briefing wird geladen...';
 
-  // Fetch the absolute latest briefing right now
+  // Generate a FRESH briefing right now (live weather + news)
   try {
-    const d = await api('/api/briefings/latest');
-    if (d.briefing && (d.briefing.content_text || d.briefing.content)) {
-      latestBriefingText = d.briefing.content_text || d.briefing.content;
+    const d = await api('/api/briefings/generate-now');
+    if (d.content) {
+      latestBriefingText = d.content;
       document.getElementById('alarm-overlay-status').textContent = '🎙 Briefing bereit';
     }
-  } catch(e) { /* use cached briefing */ }
+  } catch(e) {
+    // Fallback: try cached briefing
+    try {
+      const d2 = await api('/api/briefings/latest');
+      if (d2.briefing && (d2.briefing.content_text || d2.briefing.content)) {
+        latestBriefingText = d2.briefing.content_text || d2.briefing.content;
+        document.getElementById('alarm-overlay-status').textContent = '🎙 Briefing bereit (cached)';
+      }
+    } catch(e2) { /* no briefing available */ }
+  }
 
   // Play alarm sound, then briefing
   playAlarmSound(() => {
