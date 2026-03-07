@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MsEdgeTTS, OUTPUT_FORMAT } from 'edge-tts-node';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+import { readFile, unlink, mkdir } from 'fs/promises';
+import { randomUUID } from 'crypto';
+import path from 'path';
+import os from 'os';
 
 const VOICES: Record<string, string> = {
   jarvis: 'de-DE-ConradNeural',
+  conrad: 'de-DE-ConradNeural',
+  killian: 'de-DE-KillianNeural',
+  florian: 'de-DE-FlorianMultilingualNeural',
   female: 'de-DE-KatjaNeural',
   'en-jarvis': 'en-US-GuyNeural',
   'en-female': 'en-US-JennyNeural',
@@ -19,20 +26,17 @@ export async function POST(req: NextRequest) {
     }
 
     const voiceName = VOICES[voice || 'jarvis'] || VOICES.jarvis;
+    const tmpDir = path.join(os.tmpdir(), `tts-${randomUUID()}`);
+    await mkdir(tmpDir, { recursive: true });
 
-    const ttsEngine = new MsEdgeTTS({});
-    await ttsEngine.setMetadata(voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+    const tts = new MsEdgeTTS();
+    await tts.setMetadata(voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
+    const result = await tts.toFile(tmpDir, text);
+    const audioBuffer = await readFile(result.audioFilePath);
 
-    const readable = ttsEngine.toStream(text);
-
-    const chunks: Buffer[] = [];
-    for await (const chunk of readable) {
-      if (Buffer.isBuffer(chunk)) {
-        chunks.push(chunk);
-      }
-    }
-
-    const audioBuffer = Buffer.concat(chunks);
+    // Cleanup
+    await unlink(result.audioFilePath).catch(() => {});
+    if (result.metadataFilePath) await unlink(result.metadataFilePath).catch(() => {});
 
     return new NextResponse(new Uint8Array(audioBuffer), {
       status: 200,
@@ -43,7 +47,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err: any) {
-    console.error('Edge TTS error:', err);
+    console.error('TTS error:', err);
     return NextResponse.json({ error: 'TTS Fehler: ' + (err.message || 'unbekannt') }, { status: 500 });
   }
 }
