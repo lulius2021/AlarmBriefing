@@ -530,10 +530,23 @@ async function toggleAlarm(id) {
   // TODO: PATCH to API
 }
 
-function togglePlay(){
+async function togglePlay(){
   if(tts.speaking){tts.stop();return;}
-  if(latestBriefingText){tts.speak(latestBriefingText);}
-  else{tts.speak(L.noBriefing);}
+  const text = latestBriefingText || L.noBriefing;
+  // Try Edge TTS first
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice: 'jarvis' })
+    });
+    if (res.ok) {
+      const blob = await res.blob();
+      tts.playAudio(URL.createObjectURL(blob));
+      return;
+    }
+  } catch(e) { /* fallback */ }
+  tts.speak(text);
 }
 
 // === SETTINGS ===
@@ -746,14 +759,28 @@ async function triggerAlarm(alarm) {
   }
 
   // Play alarm sound, then briefing
-  playAlarmSound(() => {
-    // After alarm sound, speak the briefing
-    if (latestBriefingText) {
-      document.getElementById('alarm-overlay-status').textContent = '🎙 Briefing wird vorgelesen...';
-      tts.speak(latestBriefingText);
-    } else {
+  playAlarmSound(async () => {
+    if (!latestBriefingText) {
       document.getElementById('alarm-overlay-status').textContent = 'Kein Briefing vorhanden';
+      return;
     }
+    document.getElementById('alarm-overlay-status').textContent = '🎙 Briefing wird vorgelesen...';
+    // Try Edge TTS (server-side, natural voice), fallback to browser TTS
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: latestBriefingText, voice: 'jarvis' })
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        tts.playAudio(url);
+        return;
+      }
+    } catch(e) { console.warn('Edge TTS failed, falling back to browser TTS', e); }
+    // Fallback: browser TTS
+    tts.speak(latestBriefingText);
   });
 }
 
