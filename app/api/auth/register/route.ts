@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       emailVerificationRequired: emailEnabled,
     });
   } catch (err: any) {
-    return NextResponse.json({ error: 'Registrierung fehlgeschlagen' }, { status: 500 });
+    console.error('Register error:', err);
+    return NextResponse.json({ error: 'Registrierung fehlgeschlagen: ' + (err.message || 'unbekannt') }, { status: 500 });
   }
 }
