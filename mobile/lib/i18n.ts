@@ -1,0 +1,161 @@
+import { getLocales } from 'expo-localization';
+
+const translations = {
+  de: {
+    // Home
+    alarmsActive: (n: number) => `${n} Alarm${n !== 1 ? 'e' : ''} aktiv`,
+    briefingByBot: '🎙 Briefing wird vom Bot erstellt',
+    morningBriefing: 'Morgenbriefing',
+    noAlarms: 'Noch keine Wecker.\nTippe + oder lass deinen Bot einen erstellen.',
+    noBriefing: 'Noch kein Briefing vorhanden. Dein Bot wird eins erstellen.',
+
+    // Auth
+    createAccount: 'Erstelle einen Account um loszulegen.',
+    loginDesc: 'Melde dich mit deinem Account an.',
+    nameOptional: 'Name (optional)',
+    email: 'Email',
+    password: 'Passwort (min. 8 Zeichen)',
+    register: 'Registrieren',
+    login: 'Anmelden',
+    alreadyRegistered: 'Schon registriert? ',
+    noAccount: 'Noch kein Account? ',
+
+    // Onboarding
+    welcomeTitle: 'Willkommen bei AlarmBriefing',
+    welcomeDesc: 'Dein intelligenter Wecker mit Jarvis-Briefings. Der Clawdbot erstellt Wecker und spricht dir morgens Wetter, Termine und News vor.',
+    connectBot: 'Bot verbinden',
+    connectBotDesc: 'Generiere einen API-Key und gib ihn deinem Clawdbot. Damit kann er Wecker erstellen und Briefings generieren.',
+    keyGenerated: '✅ Key generiert!',
+    copyKeyDesc: 'Kopiere den Key und gib ihn deinem Clawdbot:',
+    tapToCopy: 'Antippen zum Kopieren',
+    generateApiKey: 'API-Key generieren',
+    generateKeyDesc: 'Klicke den Button um einen Key fuer deinen Bot zu erstellen.',
+    generateKey: '🔑 Key generieren',
+    generating: 'Generiere...',
+    allReady: 'Alles bereit!',
+    allReadyDesc: 'Dein Wecker mit Jarvis-Briefings. Morgens wirst du wie Tony Stark geweckt.',
+    botCan: 'Was dein Bot kann',
+    botCan1: '⏰ Wecker erstellen und verwalten',
+    botCan2: '🎙 Audio-Briefings generieren',
+    botCan3: '🌤 Wetter, Kalender, News einbinden',
+    botCan4: '🔊 Abspielen ueber deine Lautsprecher',
+    back: 'Zurück',
+    next: 'Weiter',
+    connectLater: 'Später verbinden',
+    startApp: 'App starten',
+
+    // Create Alarm
+    newAlarm: 'Neuer Wecker',
+    cancel: 'Abbrechen',
+    done: 'Fertig',
+    alarmName: 'Name',
+    alarmNamePlaceholder: 'z.B. Morgenwecker',
+    weekdays: 'Wochentage',
+    briefingInfo: '🤖 Briefing',
+    briefingInfoText: 'Dein Clawdbot entscheidet automatisch was ins Briefing kommt — Wetter, Kalender, News etc.',
+    save: 'Speichern',
+    saving: 'Speichern...',
+    days: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
+
+    // Settings
+    settings: 'Einstellungen',
+    botConnection: 'Bot-Verbindung',
+    botConnectionDesc: 'Generiere einen API-Key und gib ihn deinem Clawdbot als ALARMBRIEFING_API_KEY. Der Bot kann dann Wecker erstellen und Briefings generieren.',
+    newKey: '🔑 Neuen Key',
+    copy: '📋 Kopieren',
+    copied: 'Kopiert!',
+    copiedMsg: 'Der Key ist in deiner Zwischenablage.',
+    account: 'Account',
+    logout: '🚪 Abmelden',
+    deleteAccount: '🗑 Account löschen',
+    deleteConfirm: 'Alle Daten werden unwiderruflich gelöscht:\n\n• Account & Login\n• Alle Wecker\n• Alle API-Keys\n• Alle Briefings\n\nDas kann nicht rückgängig gemacht werden.',
+    legal: 'Rechtliches',
+    privacy: 'Datenschutz',
+    terms: 'Nutzungsbedingungen',
+    imprint: 'Impressum',
+    support: 'Support & Hilfe',
+    error: 'Fehler',
+  },
+
+  en: {
+    alarmsActive: (n: number) => `${n} alarm${n !== 1 ? 's' : ''} active`,
+    briefingByBot: '🎙 Briefing created by bot',
+    morningBriefing: 'Morning Briefing',
+    noAlarms: 'No alarms yet.\nTap + or let your bot create one.',
+    noBriefing: 'No briefing available yet. Your bot will create one.',
+
+    createAccount: 'Create an account to get started.',
+    loginDesc: 'Sign in with your account.',
+    nameOptional: 'Name (optional)',
+    email: 'Email',
+    password: 'Password (min. 8 characters)',
+    register: 'Sign Up',
+    login: 'Sign In',
+    alreadyRegistered: 'Already registered? ',
+    noAccount: 'No account yet? ',
+
+    welcomeTitle: 'Welcome to AlarmBriefing',
+    welcomeDesc: 'Your smart alarm clock with Jarvis-style briefings. ClawdBot creates alarms and reads you weather, events, and news every morning.',
+    connectBot: 'Connect Bot',
+    connectBotDesc: 'Generate an API key and give it to your ClawdBot. It can then create alarms and generate briefings.',
+    keyGenerated: '✅ Key generated!',
+    copyKeyDesc: 'Copy the key and give it to your ClawdBot:',
+    tapToCopy: 'Tap to copy',
+    generateApiKey: 'Generate API Key',
+    generateKeyDesc: 'Click the button to create a key for your bot.',
+    generateKey: '🔑 Generate Key',
+    generating: 'Generating...',
+    allReady: 'All set!',
+    allReadyDesc: 'Your alarm clock with Jarvis briefings. Wake up like Tony Stark every morning.',
+    botCan: 'What your bot can do',
+    botCan1: '⏰ Create and manage alarms',
+    botCan2: '🎙 Generate audio briefings',
+    botCan3: '🌤 Include weather, calendar, news',
+    botCan4: '🔊 Play through your speakers',
+    back: 'Back',
+    next: 'Next',
+    connectLater: 'Connect later',
+    startApp: 'Start App',
+
+    newAlarm: 'New Alarm',
+    cancel: 'Cancel',
+    done: 'Done',
+    alarmName: 'Name',
+    alarmNamePlaceholder: 'e.g. Morning alarm',
+    weekdays: 'Weekdays',
+    briefingInfo: '🤖 Briefing',
+    briefingInfoText: 'Your ClawdBot automatically decides what goes in the briefing — weather, calendar, news, etc.',
+    save: 'Save',
+    saving: 'Saving...',
+    days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+
+    settings: 'Settings',
+    botConnection: 'Bot Connection',
+    botConnectionDesc: 'Generate an API key and give it to your ClawdBot as ALARMBRIEFING_API_KEY. The bot can then create alarms and generate briefings.',
+    newKey: '🔑 New Key',
+    copy: '📋 Copy',
+    copied: 'Copied!',
+    copiedMsg: 'The key is in your clipboard.',
+    account: 'Account',
+    logout: '🚪 Sign Out',
+    deleteAccount: '🗑 Delete Account',
+    deleteConfirm: 'All data will be permanently deleted:\n\n• Account & login\n• All alarms\n• All API keys\n• All briefings\n\nThis cannot be undone.',
+    legal: 'Legal',
+    privacy: 'Privacy Policy',
+    terms: 'Terms of Service',
+    imprint: 'Imprint',
+    support: 'Support & Help',
+    error: 'Error',
+  },
+};
+
+type Lang = keyof typeof translations;
+
+function getDeviceLang(): Lang {
+  const locale = getLocales()?.[0]?.languageCode || 'en';
+  return locale === 'de' ? 'de' : 'en';
+}
+
+export const lang = getDeviceLang();
+export const t = translations[lang];
+export const ttsLang = lang === 'de' ? 'de-DE' : 'en-US';

@@ -3,8 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert 
 import { router } from 'expo-router';
 import { colors } from '@/lib/theme';
 import { createAlarm } from '@/lib/api';
-
-const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+import { t } from '@/lib/i18n';
 
 export default function CreateAlarmScreen() {
   const [hours, setHours] = useState('07');
@@ -13,65 +12,50 @@ export default function CreateAlarmScreen() {
   const [days, setDays] = useState([1, 2, 3, 4, 5]);
   const [saving, setSaving] = useState(false);
 
-  const toggleDay = (d: number) => {
-    setDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
-  };
+  const toggleDay = (d: number) => setDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
 
   const save = async () => {
+    const h = parseInt(hours), m = parseInt(minutes);
+    if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) {
+      Alert.alert(t.error, 'Invalid time'); return;
+    }
     setSaving(true);
     try {
-      const h = hours.padStart(2, '0');
-      const m = minutes.padStart(2, '0');
-      await createAlarm({ name: name || 'Alarm', time: `${h}:${m}`, days });
+      await createAlarm({ name: name || 'Alarm', time: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`, days });
       router.back();
-    } catch (e: any) {
-      Alert.alert('Fehler', e.message);
-    }
+    } catch (e: any) { Alert.alert(t.error, e.message); }
     setSaving(false);
   };
 
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={s.back}>Abbrechen</Text>
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>Neuer Wecker</Text>
-        <TouchableOpacity onPress={save} disabled={saving}>
-          <Text style={[s.done, saving && { opacity: 0.5 }]}>Fertig</Text>
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>{t.cancel}</Text></TouchableOpacity>
+        <Text style={s.headerTitle}>{t.newAlarm}</Text>
+        <TouchableOpacity onPress={save} disabled={saving}><Text style={[s.done, saving && { opacity: 0.5 }]}>{t.done}</Text></TouchableOpacity>
       </View>
-
       <ScrollView style={s.body}>
-        {/* Time */}
         <View style={s.timeRow}>
           <TextInput style={s.timeInput} value={hours} onChangeText={setHours} keyboardType="number-pad" maxLength={2} />
           <Text style={s.timeColon}>:</Text>
           <TextInput style={s.timeInput} value={minutes} onChangeText={setMinutes} keyboardType="number-pad" maxLength={2} />
         </View>
-
-        {/* Name */}
-        <Text style={s.label}>Name</Text>
-        <TextInput style={s.input} value={name} onChangeText={setName} placeholder="z.B. Morgenwecker" placeholderTextColor={colors.textMuted} />
-
-        {/* Days */}
-        <Text style={s.label}>Wochentage</Text>
+        <Text style={s.label}>{t.alarmName}</Text>
+        <TextInput style={s.input} value={name} onChangeText={setName} placeholder={t.alarmNamePlaceholder} placeholderTextColor={colors.textMuted} />
+        <Text style={s.label}>{t.weekdays}</Text>
         <View style={s.daysRow}>
-          {DAYS.map((d, i) => (
+          {t.days.map((d, i) => (
             <TouchableOpacity key={i} style={[s.dayBtn, days.includes(i) && s.dayBtnActive]} onPress={() => toggleDay(i)}>
               <Text style={[s.dayBtnText, days.includes(i) && s.dayBtnTextActive]}>{d}</Text>
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* Briefing info */}
         <View style={s.infoBox}>
-          <Text style={s.infoTitle}>🤖 Briefing</Text>
-          <Text style={s.infoText}>Dein Clawdbot entscheidet automatisch was ins Briefing kommt — Wetter, Kalender, News etc.</Text>
+          <Text style={s.infoTitle}>{t.briefingInfo}</Text>
+          <Text style={s.infoText}>{t.briefingInfoText}</Text>
         </View>
-
         <TouchableOpacity style={s.saveBtn} onPress={save} disabled={saving}>
-          <Text style={s.saveBtnText}>{saving ? 'Speichern...' : 'Speichern'}</Text>
+          <Text style={s.saveBtnText}>{saving ? t.saving : t.save}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

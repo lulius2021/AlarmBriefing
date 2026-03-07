@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { colors } from '@/lib/theme';
 import { login, register, getToken } from '@/lib/api';
+import { t } from '@/lib/i18n';
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('register');
@@ -14,31 +15,22 @@ export default function AuthScreen() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check if already logged in
     getToken().then(token => {
       if (token) {
-        const onboarded = SecureStore.getItemAsync('ab_onboarded');
-        onboarded.then(v => {
+        SecureStore.getItemAsync('ab_onboarded').then(v => {
           router.replace(v ? '/home' : '/onboarding');
         });
-      } else {
-        setLoading(false);
-      }
+      } else { setLoading(false); }
     });
   }, []);
 
   const handleAuth = async () => {
     setError('');
     try {
-      if (mode === 'register') {
-        await register(email, password, name);
-      } else {
-        await login(email, password);
-      }
+      if (mode === 'register') await register(email, password, name);
+      else await login(email, password);
       router.replace('/onboarding');
-    } catch (e: any) {
-      setError(e.message);
-    }
+    } catch (e: any) { setError(e.message); }
   };
 
   if (loading) return <View style={s.container}><Text style={s.title}>🔔</Text></View>;
@@ -47,52 +39,24 @@ export default function AuthScreen() {
     <View style={s.container}>
       <Text style={{ fontSize: 48, marginBottom: 12 }}>🔔</Text>
       <Text style={s.title}>Alarm<Text style={{ color: colors.blue }}>Briefing</Text></Text>
-      <Text style={s.desc}>
-        {mode === 'register'
-          ? 'Erstelle einen Account um loszulegen.'
-          : 'Melde dich mit deinem Account an.'}
-      </Text>
+      <Text style={s.desc}>{mode === 'register' ? t.createAccount : t.loginDesc}</Text>
 
       {mode === 'register' && (
-        <TextInput
-          style={s.input}
-          placeholder="Name (optional)"
-          placeholderTextColor={colors.textMuted}
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-        />
+        <TextInput style={s.input} placeholder={t.nameOptional} placeholderTextColor={colors.textMuted} value={name} onChangeText={setName} autoCapitalize="words" />
       )}
-      <TextInput
-        style={s.input}
-        placeholder="Email"
-        placeholderTextColor={colors.textMuted}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={s.input}
-        placeholder="Passwort (min. 8 Zeichen)"
-        placeholderTextColor={colors.textMuted}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      <TextInput style={s.input} placeholder={t.email} placeholderTextColor={colors.textMuted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+      <TextInput style={s.input} placeholder={t.password} placeholderTextColor={colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry />
 
       {!!error && <Text style={s.error}>{error}</Text>}
 
       <TouchableOpacity style={s.btn} onPress={handleAuth}>
-        <Text style={s.btnText}>{mode === 'register' ? 'Registrieren' : 'Anmelden'}</Text>
+        <Text style={s.btnText}>{mode === 'register' ? t.register : t.login}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => setMode(mode === 'register' ? 'login' : 'register')}>
         <Text style={s.switchText}>
-          {mode === 'register' ? 'Schon registriert? ' : 'Noch kein Account? '}
-          <Text style={{ color: colors.blue, fontWeight: '600' }}>
-            {mode === 'register' ? 'Anmelden' : 'Registrieren'}
-          </Text>
+          {mode === 'register' ? t.alreadyRegistered : t.noAccount}
+          <Text style={{ color: colors.blue, fontWeight: '600' }}>{mode === 'register' ? t.login : t.register}</Text>
         </Text>
       </TouchableOpacity>
     </View>

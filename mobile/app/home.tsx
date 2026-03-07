@@ -4,18 +4,10 @@ import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { colors } from '@/lib/theme';
 import { getAlarms, getLatestBriefing, clearToken } from '@/lib/api';
-import { getLocales } from 'expo-localization';
-
-const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+import { t, ttsLang } from '@/lib/i18n';
 
 interface Alarm {
-  id: string;
-  name: string;
-  active: boolean;
-  time: string;
-  days: number[];
-  managed_by: string;
-  briefing_mode: string;
+  id: string; name: string; active: boolean; time: string; days: number[]; managed_by: string; briefing_mode: string;
 }
 
 export default function HomeScreen() {
@@ -25,12 +17,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    try {
-      const a = await getAlarms();
-      setAlarms(a);
-    } catch (e) {
-      console.error(e);
-    }
+    try { const a = await getAlarms(); setAlarms(a); } catch (e) { console.error(e); }
     try {
       const b = await getLatestBriefing();
       if (b.briefing?.content_text || b.briefing?.content) setBriefing(b.briefing.content_text || b.briefing.content);
@@ -39,113 +26,74 @@ export default function HomeScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  };
+  const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
   const toggleSpeech = () => {
-    if (speaking) {
-      Speech.stop();
-      setSpeaking(false);
-    } else {
-      const lang = getLocales()?.[0]?.languageCode || 'en';
-      const ttsLang = lang === 'de' ? 'de-DE' : 'en-US';
-      const fallback = lang === 'de' ? 'Noch kein Briefing vorhanden. Dein Bot wird eins erstellen.' : 'No briefing available yet. Your bot will create one.';
-      const text = briefing || fallback;
-      Speech.speak(text, {
-        language: ttsLang,
-        rate: 1.0,
-        pitch: 0.9,
-        onDone: () => setSpeaking(false),
-      });
+    if (speaking) { Speech.stop(); setSpeaking(false); }
+    else {
+      Speech.speak(briefing || t.noBriefing, { language: ttsLang, rate: 1.0, pitch: 0.9, onDone: () => setSpeaking(false) });
       setSpeaking(true);
     }
   };
 
-  const sorted = [...alarms].sort((a, b) =>
-    a.active === b.active ? a.time.localeCompare(b.time) : a.active ? -1 : 1
-  );
+  const sorted = [...alarms].sort((a, b) => a.active === b.active ? a.time.localeCompare(b.time) : a.active ? -1 : 1);
   const active = alarms.filter(a => a.active);
   const next = sorted.find(a => a.active);
 
   return (
     <View style={s.container}>
-      {/* Header */}
       <View style={s.header}>
         <View>
           <Text style={s.title}>Alarm<Text style={{ color: colors.blue }}>Briefing</Text></Text>
-          <Text style={s.sub}>{active.length} Alarm{active.length !== 1 ? 'e' : ''} aktiv</Text>
+          <Text style={s.sub}>{t.alarmsActive(active.length)}</Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <TouchableOpacity style={s.iconBtn} onPress={() => router.push('/settings')}>
-            <Text style={{ fontSize: 16 }}>⚙️</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={s.iconBtn} onPress={() => router.push('/settings')}>
+          <Text style={{ fontSize: 16 }}>⚙️</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Next Alarm */}
       {next && (
         <View style={s.nextAlarm}>
           <Text style={{ fontSize: 26 }}>⏰</Text>
           <View>
-            <Text style={s.naTime}>{next.time}</Text>
+            <Text style={s.naTime}>{next.time.substring(0, 5)}</Text>
             <Text style={s.naLabel}>{next.name}</Text>
-            <Text style={s.naBrief}>🎙 Briefing wird vom Bot erstellt</Text>
+            <Text style={s.naBrief}>{t.briefingByBot}</Text>
           </View>
         </View>
       )}
 
-      {/* Briefing Player */}
       {briefing && (
         <TouchableOpacity style={s.player} onPress={toggleSpeech}>
-          <View style={s.playBtn}>
-            <Text style={{ color: 'white', fontSize: 14 }}>{speaking ? '⏸' : '▶'}</Text>
-          </View>
+          <View style={s.playBtn}><Text style={{ color: 'white', fontSize: 14 }}>{speaking ? '⏸' : '▶'}</Text></View>
           <View style={{ flex: 1 }}>
-            <Text style={s.playerTitle}>Morgenbriefing</Text>
+            <Text style={s.playerTitle}>{t.morningBriefing}</Text>
             <Text style={s.playerSub} numberOfLines={1}>{briefing.substring(0, 60)}...</Text>
           </View>
         </TouchableOpacity>
       )}
 
-      {/* Alarm List */}
-      <ScrollView
-        style={s.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blue} />}
-      >
+      <ScrollView style={s.list} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blue} />}>
         {sorted.length === 0 ? (
           <View style={s.empty}>
             <Text style={{ fontSize: 40, opacity: 0.5 }}>⏰</Text>
-            <Text style={s.emptyText}>Noch keine Wecker.{'\n'}Tippe + oder lass deinen Bot einen erstellen.</Text>
+            <Text style={s.emptyText}>{t.noAlarms}</Text>
           </View>
-        ) : (
-          sorted.map(a => (
-            <View key={a.id} style={[s.card, !a.active && { opacity: 0.4 }]}>
-              <View>
-                <Text style={s.alarmTime}>{a.time}</Text>
-                <Text style={s.alarmMeta}>
-                  {a.name} {a.managed_by === 'bot' && <Text style={s.botTag}>BOT</Text>}
-                </Text>
-                <View style={{ flexDirection: 'row', gap: 3, marginTop: 3 }}>
-                  {(a.days?.length ? a.days : []).map(d => (
-                    <View key={d} style={s.dayTag}>
-                      <Text style={s.dayTagText}>{DAYS[d]}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-              <View style={[s.toggle, a.active && s.toggleOn]}>
-                <View style={[s.toggleDot, a.active && s.toggleDotOn]} />
+        ) : sorted.map(a => (
+          <View key={a.id} style={[s.card, !a.active && { opacity: 0.4 }]}>
+            <View>
+              <Text style={s.alarmTime}>{a.time.substring(0, 5)}</Text>
+              <Text style={s.alarmMeta}>{a.name} {a.managed_by === 'bot' && <Text style={s.botTag}>BOT</Text>}</Text>
+              <View style={{ flexDirection: 'row', gap: 3, marginTop: 3 }}>
+                {(a.days || []).map(d => <View key={d} style={s.dayTag}><Text style={s.dayTagText}>{t.days[d]}</Text></View>)}
               </View>
             </View>
-          ))
-        )}
+            <View style={[s.toggle, a.active && s.toggleOn]}><View style={[s.toggleDot, a.active && s.toggleDotOn]} /></View>
+          </View>
+        ))}
         <View style={{ height: 80 }} />
       </ScrollView>
 
-      {/* FAB */}
       <TouchableOpacity style={s.fab} onPress={() => router.push('/create-alarm')}>
         <Text style={{ color: 'white', fontSize: 28, fontWeight: '300' }}>+</Text>
       </TouchableOpacity>

@@ -5,6 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as Clipboard from 'expo-clipboard';
 import { colors } from '@/lib/theme';
 import { generateBotKey, deleteAccount, clearToken } from '@/lib/api';
+import { t } from '@/lib/i18n';
 
 const API_URL = 'https://alarm-briefing.vercel.app';
 
@@ -14,116 +15,67 @@ export default function SettingsScreen() {
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    SecureStore.getItemAsync('ab_user').then(u => {
-      if (u) setEmail(JSON.parse(u).email);
-    });
+    SecureStore.getItemAsync('ab_user').then(u => { if (u) setEmail(JSON.parse(u).email); });
   }, []);
 
   const genKey = async () => {
     setGenerating(true);
-    try {
-      const data = await generateBotKey();
-      setBotKey(data.key);
-    } catch (e: any) {
-      Alert.alert('Fehler', e.message);
-    }
+    try { const data = await generateBotKey(); setBotKey(data.key); }
+    catch (e: any) { Alert.alert(t.error, e.message); }
     setGenerating(false);
   };
 
   const copyKey = async () => {
-    if (botKey) {
-      await Clipboard.setStringAsync(botKey);
-      Alert.alert('Kopiert!', 'Der Key ist in deiner Zwischenablage.');
-    }
+    if (botKey) { await Clipboard.setStringAsync(botKey); Alert.alert(t.copied, t.copiedMsg); }
   };
 
-  const logout = async () => {
-    await clearToken();
-    router.replace('/');
-  };
+  const logout = async () => { await clearToken(); router.replace('/'); };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Account löschen',
-      'Alle Daten werden unwiderruflich gelöscht:\n\n• Account & Login\n• Alle Wecker\n• Alle API-Keys\n• Alle Briefings\n\nDas kann nicht rückgängig gemacht werden.',
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        {
-          text: 'Löschen', style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteAccount();
-              router.replace('/');
-            } catch (e: any) {
-              Alert.alert('Fehler', e.message);
-            }
-          },
-        },
-      ]
-    );
+    Alert.alert(t.deleteAccount, t.deleteConfirm, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.deleteAccount, style: 'destructive', onPress: async () => {
+        try { await deleteAccount(); router.replace('/'); }
+        catch (e: any) { Alert.alert(t.error, e.message); }
+      }},
+    ]);
   };
 
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={s.back}>← Zurück</Text>
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>Einstellungen</Text>
+        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>← {t.back}</Text></TouchableOpacity>
+        <Text style={s.headerTitle}>{t.settings}</Text>
         <View style={{ width: 60 }} />
       </View>
-
       <ScrollView style={s.body}>
-        <Text style={s.section}>Bot-Verbindung</Text>
+        <Text style={s.section}>{t.botConnection}</Text>
         <View style={s.card}>
-          <View style={s.explain}>
-            <Text style={s.explainText}>
-              Generiere einen API-Key und gib ihn deinem Clawdbot als ALARMBRIEFING_API_KEY.
-              Der Bot kann dann Wecker erstellen und Briefings generieren.
-            </Text>
-          </View>
-          {botKey && (
-            <TouchableOpacity style={s.keyBox} onPress={copyKey}>
-              <Text style={s.keyText}>{botKey}</Text>
-            </TouchableOpacity>
-          )}
+          <View style={s.explain}><Text style={s.explainText}>{t.botConnectionDesc}</Text></View>
+          {botKey && (<TouchableOpacity style={s.keyBox} onPress={copyKey}><Text style={s.keyText}>{botKey}</Text></TouchableOpacity>)}
           <View style={s.cardActions}>
             <TouchableOpacity style={s.actionBtn} onPress={genKey} disabled={generating}>
-              <Text style={s.actionBtnText}>{generating ? '...' : '🔑 Neuen Key'}</Text>
+              <Text style={s.actionBtnText}>{generating ? '...' : t.newKey}</Text>
             </TouchableOpacity>
-            {botKey && (
-              <TouchableOpacity style={s.actionBtnSecondary} onPress={copyKey}>
-                <Text style={s.actionBtnSecondaryText}>📋 Kopieren</Text>
-              </TouchableOpacity>
-            )}
+            {botKey && (<TouchableOpacity style={s.actionBtnSecondary} onPress={copyKey}><Text style={s.actionBtnSecondaryText}>{t.copy}</Text></TouchableOpacity>)}
           </View>
         </View>
 
-        <Text style={s.section}>Account</Text>
+        <Text style={s.section}>{t.account}</Text>
         <View style={s.card}>
-          <View style={s.row}><Text style={s.rowLabel}>Email</Text><Text style={s.rowDim}>{email}</Text></View>
-          <TouchableOpacity style={s.row} onPress={logout}>
-            <Text style={s.rowLabel}>🚪 Abmelden</Text><Text style={s.rowDim}>→</Text>
-          </TouchableOpacity>
+          <View style={s.row}><Text style={s.rowLabel}>{t.email}</Text><Text style={s.rowDim}>{email}</Text></View>
+          <TouchableOpacity style={s.row} onPress={logout}><Text style={s.rowLabel}>{t.logout}</Text><Text style={s.rowDim}>→</Text></TouchableOpacity>
           <TouchableOpacity style={[s.row, { borderBottomWidth: 0 }]} onPress={handleDelete}>
-            <Text style={[s.rowLabel, { color: colors.danger }]}>🗑 Account löschen</Text><Text style={{ color: colors.danger }}>→</Text>
+            <Text style={[s.rowLabel, { color: colors.danger }]}>{t.deleteAccount}</Text><Text style={{ color: colors.danger }}>→</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={s.section}>Rechtliches</Text>
+        <Text style={s.section}>{t.legal}</Text>
         <View style={s.card}>
-          <TouchableOpacity style={s.row} onPress={() => Linking.openURL(`${API_URL}/privacy.html`)}>
-            <Text style={s.rowLabel}>Datenschutz</Text><Text style={s.rowDim}>→</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.row} onPress={() => Linking.openURL(`${API_URL}/terms.html`)}>
-            <Text style={s.rowLabel}>Nutzungsbedingungen</Text><Text style={s.rowDim}>→</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.row} onPress={() => Linking.openURL(`${API_URL}/imprint.html`)}>
-            <Text style={s.rowLabel}>Impressum</Text><Text style={s.rowDim}>→</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[s.row, { borderBottomWidth: 0 }]} onPress={() => Linking.openURL(`${API_URL}/support.html`)}>
-            <Text style={s.rowLabel}>Support & Hilfe</Text><Text style={s.rowDim}>→</Text>
-          </TouchableOpacity>
+          <TouchableOpacity style={s.row} onPress={() => Linking.openURL(`${API_URL}/privacy.html`)}><Text style={s.rowLabel}>{t.privacy}</Text><Text style={s.rowDim}>→</Text></TouchableOpacity>
+          <TouchableOpacity style={s.row} onPress={() => Linking.openURL(`${API_URL}/terms.html`)}><Text style={s.rowLabel}>{t.terms}</Text><Text style={s.rowDim}>→</Text></TouchableOpacity>
+          <TouchableOpacity style={s.row} onPress={() => Linking.openURL(`${API_URL}/imprint.html`)}><Text style={s.rowLabel}>{t.imprint}</Text><Text style={s.rowDim}>→</Text></TouchableOpacity>
+          <TouchableOpacity style={[s.row, { borderBottomWidth: 0 }]} onPress={() => Linking.openURL(`${API_URL}/support.html`)}><Text style={s.rowLabel}>{t.support}</Text><Text style={s.rowDim}>→</Text></TouchableOpacity>
         </View>
 
         <Text style={s.version}>AlarmBriefing v1.0.0</Text>

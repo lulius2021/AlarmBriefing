@@ -68,13 +68,20 @@ export async function GET(req: NextRequest) {
     const user = await DB.getUserById(userId);
     const location = user?.settings?.location?.split(',')[0] || 'Berlin';
 
+    const locale = user?.settings?.locale || req.headers.get('accept-language')?.substring(0, 2) || 'de';
+    const isDE = locale === 'de';
+
     const h = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Berlin' })).getHours();
-    const greeting = h < 10 ? 'Guten Morgen!' : h < 14 ? 'Guten Tag!' : h < 18 ? 'Guten Nachmittag!' : 'Guten Abend!';
-    const today = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' });
+    const greeting = isDE
+      ? (h < 10 ? 'Guten Morgen!' : h < 14 ? 'Guten Tag!' : h < 18 ? 'Guten Nachmittag!' : 'Guten Abend!')
+      : (h < 10 ? 'Good morning!' : h < 14 ? 'Good afternoon!' : 'Good evening!');
+    const today = new Date().toLocaleDateString(isDE ? 'de-DE' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' });
 
     const [weather, news] = await Promise.all([fetchWeather(location), fetchNews()]);
 
-    const content = `${greeting} Heute ist ${today}. ${weather}${news}Hab einen grossartigen Tag!`;
+    const todayIs = isDE ? `Heute ist ${today}.` : `Today is ${today}.`;
+    const outro = isDE ? 'Hab einen grossartigen Tag!' : 'Have a great day!';
+    const content = `${greeting} ${todayIs} ${weather}${news}${outro}`;
 
     return NextResponse.json({ content, generatedAt: new Date().toISOString() });
   } catch (err: any) {

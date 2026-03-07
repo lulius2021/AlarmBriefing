@@ -5,6 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as Clipboard from 'expo-clipboard';
 import { colors } from '@/lib/theme';
 import { generateBotKey } from '@/lib/api';
+import { t } from '@/lib/i18n';
 
 export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
@@ -13,55 +14,36 @@ export default function OnboardingScreen() {
 
   const genKey = async () => {
     setGenerating(true);
-    try {
-      const data = await generateBotKey();
-      setBotKey(data.key);
-    } catch (e: any) {
-      Alert.alert('Fehler', e.message);
-    }
+    try { const data = await generateBotKey(); setBotKey(data.key); }
+    catch (e: any) { Alert.alert(t.error, e.message); }
     setGenerating(false);
   };
 
   const copyKey = async () => {
-    if (botKey) {
-      await Clipboard.setStringAsync(botKey);
-      Alert.alert('Kopiert!', 'Der Key ist in deiner Zwischenablage.');
-    }
+    if (botKey) { await Clipboard.setStringAsync(botKey); Alert.alert(t.copied, t.copiedMsg); }
   };
 
-  const finish = async () => {
-    await SecureStore.setItemAsync('ab_onboarded', '1');
-    router.replace('/home');
-  };
+  const finish = async () => { await SecureStore.setItemAsync('ab_onboarded', '1'); router.replace('/home'); };
 
   const steps = [
+    { icon: '🔔', title: t.welcomeTitle, desc: t.welcomeDesc, content: null },
     {
-      icon: '🔔',
-      title: 'Willkommen bei AlarmBriefing',
-      desc: 'Dein intelligenter Wecker mit Jarvis-Briefings. Der Clawdbot erstellt Wecker und spricht dir morgens Wetter, Termine und News vor.',
-      content: null,
-    },
-    {
-      icon: '🔑',
-      title: 'Bot verbinden',
-      desc: 'Generiere einen API-Key und gib ihn deinem Clawdbot. Damit kann er Wecker erstellen und Briefings generieren.',
+      icon: '🔑', title: t.connectBot, desc: t.connectBotDesc,
       content: (
         <View style={s.box}>
           {botKey ? (
             <>
-              <Text style={s.boxTitle}>✅ Key generiert!</Text>
-              <Text style={s.boxDesc}>Kopiere den Key und gib ihn deinem Clawdbot:</Text>
-              <TouchableOpacity style={s.keyBox} onPress={copyKey}>
-                <Text style={s.keyText}>{botKey}</Text>
-              </TouchableOpacity>
-              <Text style={s.hint}>Antippen zum Kopieren</Text>
+              <Text style={s.boxTitle}>{t.keyGenerated}</Text>
+              <Text style={s.boxDesc}>{t.copyKeyDesc}</Text>
+              <TouchableOpacity style={s.keyBox} onPress={copyKey}><Text style={s.keyText}>{botKey}</Text></TouchableOpacity>
+              <Text style={s.hint}>{t.tapToCopy}</Text>
             </>
           ) : (
             <>
-              <Text style={s.boxTitle}>API-Key generieren</Text>
-              <Text style={s.boxDesc}>Klicke den Button um einen Key fuer deinen Bot zu erstellen.</Text>
+              <Text style={s.boxTitle}>{t.generateApiKey}</Text>
+              <Text style={s.boxDesc}>{t.generateKeyDesc}</Text>
               <TouchableOpacity style={s.genBtn} onPress={genKey} disabled={generating}>
-                <Text style={s.genBtnText}>{generating ? 'Generiere...' : '🔑 Key generieren'}</Text>
+                <Text style={s.genBtnText}>{generating ? t.generating : t.generateKey}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -69,16 +51,14 @@ export default function OnboardingScreen() {
       ),
     },
     {
-      icon: '✅',
-      title: 'Alles bereit!',
-      desc: 'Dein Wecker mit Jarvis-Briefings. Morgens wirst du wie Tony Stark geweckt.',
+      icon: '✅', title: t.allReady, desc: t.allReadyDesc,
       content: (
         <View style={s.box}>
-          <Text style={s.boxTitle}>Was dein Bot kann</Text>
-          <Text style={s.boxDesc}>⏰ Wecker erstellen und verwalten</Text>
-          <Text style={s.boxDesc}>🎙 Audio-Briefings generieren</Text>
-          <Text style={s.boxDesc}>🌤 Wetter, Kalender, News einbinden</Text>
-          <Text style={s.boxDesc}>🔊 Abspielen ueber deine Lautsprecher</Text>
+          <Text style={s.boxTitle}>{t.botCan}</Text>
+          <Text style={s.boxDesc}>{t.botCan1}</Text>
+          <Text style={s.boxDesc}>{t.botCan2}</Text>
+          <Text style={s.boxDesc}>{t.botCan3}</Text>
+          <Text style={s.boxDesc}>{t.botCan4}</Text>
         </View>
       ),
     },
@@ -88,35 +68,23 @@ export default function OnboardingScreen() {
 
   return (
     <View style={s.container}>
-      {/* Progress */}
       <View style={s.progress}>
-        {steps.map((_, i) => (
-          <View key={i} style={[s.dot, i <= step && s.dotActive, i === step && s.dotCurrent]} />
-        ))}
+        {steps.map((_, i) => <View key={i} style={[s.dot, i <= step && s.dotActive, i === step && s.dotCurrent]} />)}
       </View>
-
-      {/* Content */}
       <View style={s.body}>
         <Text style={s.icon}>{current.icon}</Text>
         <Text style={s.title}>{current.title}</Text>
         <Text style={s.desc}>{current.desc}</Text>
         {current.content}
       </View>
-
-      {/* Footer */}
       <View style={s.footer}>
         {step > 0 && (
           <TouchableOpacity style={s.btnSecondary} onPress={() => setStep(step - 1)}>
-            <Text style={s.btnSecondaryText}>Zurück</Text>
+            <Text style={s.btnSecondaryText}>{t.back}</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity
-          style={[s.btn, { flex: 1 }]}
-          onPress={() => (step < steps.length - 1 ? setStep(step + 1) : finish())}
-        >
-          <Text style={s.btnText}>
-            {step === steps.length - 1 ? 'App starten' : step === 1 && !botKey ? 'Später verbinden' : 'Weiter'}
-          </Text>
+        <TouchableOpacity style={[s.btn, { flex: 1 }]} onPress={() => step < steps.length - 1 ? setStep(step + 1) : finish()}>
+          <Text style={s.btnText}>{step === steps.length - 1 ? t.startApp : step === 1 && !botKey ? t.connectLater : t.next}</Text>
         </TouchableOpacity>
       </View>
     </View>
