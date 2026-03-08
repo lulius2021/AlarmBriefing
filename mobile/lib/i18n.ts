@@ -8,28 +8,38 @@ const translations = {
     morningBriefing: 'Morgenbriefing',
     noAlarms: 'Noch keine Wecker.\nTippe + oder lass deinen Bot einen erstellen.',
     noBriefing: 'Noch kein Briefing vorhanden. Dein Bot wird eins erstellen.',
+    oneTime: 'Einmalig',
 
     // Auth
     createAccount: 'Erstelle einen Account um loszulegen.',
     loginDesc: 'Melde dich mit deinem Account an.',
     nameOptional: 'Name (optional)',
-    email: 'Email',
+    email: 'E-Mail',
     password: 'Passwort (min. 8 Zeichen)',
     register: 'Registrieren',
     login: 'Anmelden',
     alreadyRegistered: 'Schon registriert? ',
     noAccount: 'Noch kein Account? ',
+    skipLogin: 'Ohne Account fortfahren →',
+    emailRequired: 'E-Mail und Passwort erforderlich',
+    passwordMin: 'Passwort muss mindestens 8 Zeichen lang sein',
+    loading: 'Laden...',
 
     // Onboarding
     welcomeTitle: 'Willkommen bei AlarmBriefing',
     welcomeDesc: 'Dein intelligenter Wecker mit Jarvis-Briefings. Der Clawdbot erstellt Wecker und spricht dir morgens Wetter, Termine und News vor.',
+    howTitle: 'So funktioniert\'s',
+    how1: '🤖 Dein Clawdbot steuert alles automatisch',
+    how2: '⏰ Er erstellt Wecker für dich',
+    how3: '🎙 Er generiert Audio-Briefings (wie Jarvis)',
+    how4: '🔊 Beim Alarm hörst du dein Briefing',
     connectBot: 'Bot verbinden',
     connectBotDesc: 'Generiere einen API-Key und gib ihn deinem Clawdbot. Damit kann er Wecker erstellen und Briefings generieren.',
     keyGenerated: '✅ Key generiert!',
     copyKeyDesc: 'Kopiere den Key und gib ihn deinem Clawdbot:',
     tapToCopy: 'Antippen zum Kopieren',
     generateApiKey: 'API-Key generieren',
-    generateKeyDesc: 'Klicke den Button um einen Key fuer deinen Bot zu erstellen.',
+    generateKeyDesc: 'Klicke den Button um einen Key für deinen Bot zu erstellen.',
     generateKey: '🔑 Key generieren',
     generating: 'Generiere...',
     allReady: 'Alles bereit!',
@@ -38,7 +48,7 @@ const translations = {
     botCan1: '⏰ Wecker erstellen und verwalten',
     botCan2: '🎙 Audio-Briefings generieren',
     botCan3: '🌤 Wetter, Kalender, News einbinden',
-    botCan4: '🔊 Abspielen ueber deine Lautsprecher',
+    botCan4: '🔊 Abspielen über deine Lautsprecher',
     back: 'Zurück',
     next: 'Weiter',
     connectLater: 'Später verbinden',
@@ -57,24 +67,68 @@ const translations = {
     saving: 'Speichern...',
     days: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
 
+    // Detail
+    detailBack: '← Zurück',
+    briefingMode: 'Briefing-Modus',
+    modeNone: 'Nur Alarm',
+    modeShort: 'Kurzbriefing (10-30s)',
+    modeStandard: 'Standardbriefing (1-3 Min)',
+    snooze: 'Snooze',
+    snoozeDuration: 'Dauer (Min)',
+    vibration: 'Vibration',
+    lastTriggered: (date: string) => `Letzter Alarm: ${date}`,
+    deleteAlarm: 'Wecker löschen',
+    deleteConfirmAlarm: (name: string) => `"${name}" wirklich löschen?`,
+
     // Settings
     settings: 'Einstellungen',
+    settingsBack: '← Zurück',
     botConnection: 'Bot-Verbindung',
     botConnectionDesc: 'Generiere einen API-Key und gib ihn deinem Clawdbot als ALARMBRIEFING_API_KEY. Der Bot kann dann Wecker erstellen und Briefings generieren.',
+    noBot: 'Kein Bot verbunden',
     newKey: '🔑 Neuen Key',
     copy: '📋 Kopieren',
     copied: 'Kopiert!',
     copiedMsg: 'Der Key ist in deiner Zwischenablage.',
+    briefingSources: 'Briefing-Quellen',
+    briefingSourcesDesc: 'Dein Bot sammelt diese Daten und erstellt daraus ein Audio-Briefing.',
+    weather: '🌤 Wetter',
+    calendar: '📅 Kalender',
+    news: '📰 Nachrichten',
+    tasks: '✅ Aufgaben',
+    audio: 'Audio',
+    audioDesc: 'Stimme und Tempo für dein Audio-Briefing.',
+    voice: 'Stimme',
+    speed: 'Tempo',
     account: 'Account',
     logout: '🚪 Abmelden',
     deleteAccount: '🗑 Account löschen',
     deleteConfirm: 'Alle Daten werden unwiderruflich gelöscht:\n\n• Account & Login\n• Alle Wecker\n• Alle API-Keys\n• Alle Briefings\n\nDas kann nicht rückgängig gemacht werden.',
+    deleteConfirmTitle: 'Account löschen',
     legal: 'Rechtliches',
     privacy: 'Datenschutz',
     terms: 'Nutzungsbedingungen',
     imprint: 'Impressum',
     support: 'Support & Hilfe',
+    botActivity: 'Bot-Aktivitäten',
+    noActivity: 'Noch keine Aktivitäten',
+    dataExport: '📦 Daten exportieren',
+
+    // Alarm overlay
+    alarmSnooze: '😴 Snooze',
+    alarmDismiss: '✅ Aufstehen',
+    alarmBriefingLoading: '🎙 Briefing wird geladen...',
+    alarmBriefingReady: '🎙 Briefing bereit',
+    alarmBriefingPlaying: '🎙 Briefing wird vorgelesen...',
+    alarmNoBriefing: 'Kein Briefing vorhanden',
+
+    // Audit
+    auditTitle: 'Audit-Log',
+    auditEmpty: 'Keine Bot-Aktivitäten',
+
+    // Common
     error: 'Fehler',
+    delete: 'Löschen',
   },
 
   en: {
@@ -83,6 +137,7 @@ const translations = {
     morningBriefing: 'Morning Briefing',
     noAlarms: 'No alarms yet.\nTap + or let your bot create one.',
     noBriefing: 'No briefing available yet. Your bot will create one.',
+    oneTime: 'One-time',
 
     createAccount: 'Create an account to get started.',
     loginDesc: 'Sign in with your account.',
@@ -93,11 +148,20 @@ const translations = {
     login: 'Sign In',
     alreadyRegistered: 'Already registered? ',
     noAccount: 'No account yet? ',
+    skipLogin: 'Continue without account →',
+    emailRequired: 'Email and password required',
+    passwordMin: 'Password must be at least 8 characters',
+    loading: 'Loading...',
 
     welcomeTitle: 'Welcome to AlarmBriefing',
     welcomeDesc: 'Your smart alarm clock with Jarvis-style briefings. ClawdBot creates alarms and reads you weather, events, and news every morning.',
+    howTitle: 'How it works',
+    how1: '🤖 Your ClawdBot handles everything automatically',
+    how2: '⏰ It creates alarms for you',
+    how3: '🎙 It generates audio briefings (like Jarvis)',
+    how4: '🔊 You hear your briefing when the alarm goes off',
     connectBot: 'Connect Bot',
-    connectBotDesc: 'Generate an API key and give it to your ClawdBot. It can then create alarms and generate briefings.',
+    connectBotDesc: 'Generate an API key and give it to your ClawdBot so it can access your app.',
     keyGenerated: '✅ Key generated!',
     copyKeyDesc: 'Copy the key and give it to your ClawdBot:',
     tapToCopy: 'Tap to copy',
@@ -129,31 +193,75 @@ const translations = {
     saving: 'Saving...',
     days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 
+    detailBack: '← Back',
+    briefingMode: 'Briefing Mode',
+    modeNone: 'Alarm only',
+    modeShort: 'Short briefing (10-30s)',
+    modeStandard: 'Standard briefing (1-3 min)',
+    snooze: 'Snooze',
+    snoozeDuration: 'Duration (min)',
+    vibration: 'Vibration',
+    lastTriggered: (date: string) => `Last alarm: ${date}`,
+    deleteAlarm: 'Delete Alarm',
+    deleteConfirmAlarm: (name: string) => `Really delete "${name}"?`,
+
     settings: 'Settings',
+    settingsBack: '← Back',
     botConnection: 'Bot Connection',
     botConnectionDesc: 'Generate an API key and give it to your ClawdBot as ALARMBRIEFING_API_KEY. The bot can then create alarms and generate briefings.',
+    noBot: 'No bot connected',
     newKey: '🔑 New Key',
     copy: '📋 Copy',
     copied: 'Copied!',
     copiedMsg: 'The key is in your clipboard.',
+    briefingSources: 'Briefing Sources',
+    briefingSourcesDesc: 'Your bot collects this data and creates an audio briefing from it.',
+    weather: '🌤 Weather',
+    calendar: '📅 Calendar',
+    news: '📰 News',
+    tasks: '✅ Tasks',
+    audio: 'Audio',
+    audioDesc: 'Voice and speed for your audio briefing.',
+    voice: 'Voice',
+    speed: 'Speed',
     account: 'Account',
     logout: '🚪 Sign Out',
     deleteAccount: '🗑 Delete Account',
     deleteConfirm: 'All data will be permanently deleted:\n\n• Account & login\n• All alarms\n• All API keys\n• All briefings\n\nThis cannot be undone.',
+    deleteConfirmTitle: 'Delete Account',
     legal: 'Legal',
     privacy: 'Privacy Policy',
     terms: 'Terms of Service',
     imprint: 'Imprint',
     support: 'Support & Help',
+    botActivity: 'Bot Activity',
+    noActivity: 'No activity yet',
+    dataExport: '📦 Export data',
+
+    alarmSnooze: '😴 Snooze',
+    alarmDismiss: '✅ Dismiss',
+    alarmBriefingLoading: '🎙 Loading briefing...',
+    alarmBriefingReady: '🎙 Briefing ready',
+    alarmBriefingPlaying: '🎙 Playing briefing...',
+    alarmNoBriefing: 'No briefing available',
+
+    auditTitle: 'Audit Log',
+    auditEmpty: 'No bot activity',
+
     error: 'Error',
+    delete: 'Delete',
   },
 };
 
 type Lang = keyof typeof translations;
 
 function getDeviceLang(): Lang {
-  const locale = getLocales()?.[0]?.languageCode || 'en';
-  return locale === 'de' ? 'de' : 'en';
+  try {
+    const locale = getLocales()?.[0]?.languageCode || 'en';
+    return locale === 'de' ? 'de' : 'en';
+  } catch {
+    return 'en';
+  }
 }
 
 export const lang = getDeviceLang();
